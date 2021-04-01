@@ -20,11 +20,25 @@
 
 #include <pipebot_msgs/msg/leds.h>
 
-
 #include "raspi_robot_driver.h"
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);vTaskDelete(NULL);}}
-#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
+#define RCCHECK(fn)                                                                      \
+    {                                                                                    \
+        rcl_ret_t temp_rc = fn;                                                          \
+        if ((temp_rc != RCL_RET_OK))                                                     \
+        {                                                                                \
+            printf("Failed status on line %d: %d. Aborting.\n", __LINE__, (int)temp_rc); \
+            vTaskDelete(NULL);                                                           \
+        }                                                                                \
+    }
+#define RCSOFTCHECK(fn)                                                                    \
+    {                                                                                      \
+        rcl_ret_t temp_rc = fn;                                                            \
+        if ((temp_rc != RCL_RET_OK))                                                       \
+        {                                                                                  \
+            printf("Failed status on line %d: %d. Continuing.\n", __LINE__, (int)temp_rc); \
+        }                                                                                  \
+    }
 
 // Tick definitions.
 #define TICK_RATE_HZ (10)
@@ -38,14 +52,14 @@ rcl_publisher_t publisher_status;
 rcl_subscription_t subscriber_leds;
 rcl_subscription_t subscriber_motors;
 
-
 // Logging name.
 static const char *TAG = "esp32_app";
 
-static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
+static void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
-    if (timer != NULL) {
+    if (timer != NULL)
+    {
         status_t status;
         raspi_robot_get_status(&status);
         raspi_robot_msgs__msg__Status msg;
@@ -57,33 +71,33 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
     }
 }
 
-static void subscription_callback_leds(const void * msgin)
+static void subscription_callback_leds(const void *msgin)
 {
-	const pipebot_msgs__msg__Leds * msg = (const pipebot_msgs__msg__Leds *)msgin;
+    const pipebot_msgs__msg__Leds *msg = (const pipebot_msgs__msg__Leds *)msgin;
     ESP_LOGI(TAG, "Received: %d, %d", msg->led, msg->flash_rate);
     raspi_robot_set_led(msg->led, msg->flash_rate);
 }
 
-static void subscription_callback_motors(const void * msgin)
+static void subscription_callback_motors(const void *msgin)
 {
-	const raspi_robot_msgs__msg__Motors * msg = (const raspi_robot_msgs__msg__Motors *)msgin;
+    const raspi_robot_msgs__msg__Motors *msg = (const raspi_robot_msgs__msg__Motors *)msgin;
     ESP_LOGI(TAG, "Received: %d, %d, %d", msg->left, msg->right, msg->duration_ms);
     // Call motor functions.
     uint16_t ticks = msg->duration_ms / MS_PER_TICK;
     raspi_robot_motors_drive(msg->left, msg->right, ticks);
 }
 
-void appMain(void * arg)
+void appMain(void *arg)
 {
-	rcl_allocator_t allocator = rcl_get_default_allocator();
-	rclc_support_t support;
+    rcl_allocator_t allocator = rcl_get_default_allocator();
+    rclc_support_t support;
 
-	// create init_options
-	RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
+    // create init_options
+    RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
     // Create node
     rcl_node_t node = rcl_get_zero_initialized_node();
-    RCCHECK(rclc_node_init_default(&node, "raspi_robot", "", &support));
+    RCCHECK(rclc_node_init_default(&node, "raspirobot_esp32", "", &support));
 
     // Create status publisher
     RCCHECK(rclc_publisher_init_default(
@@ -93,17 +107,17 @@ void appMain(void * arg)
         "raspi_robot_status_p"));
 
     // Create subscribers.
-	RCCHECK(rclc_subscription_init_default(
-		&subscriber_leds,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(pipebot_msgs, msg, Leds),
-		"raspi_robot_leds_s"));
+    RCCHECK(rclc_subscription_init_default(
+        &subscriber_leds,
+        &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(pipebot_msgs, msg, Leds),
+        "raspi_robot_leds_s"));
 
-	RCCHECK(rclc_subscription_init_default(
-		&subscriber_motors,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Motors),
-		"raspi_robot_motors_s"));
+    RCCHECK(rclc_subscription_init_default(
+        &subscriber_motors,
+        &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Motors),
+        "raspi_robot_motors_s"));
 
     // Create timer.
     rcl_timer_t timer = rcl_get_zero_initialized_timer();
@@ -118,18 +132,19 @@ void appMain(void * arg)
     rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
     RCCHECK(rclc_executor_init(&executor, &support.context, EXECUTOR_HANDLE_COUNT, &allocator));
 
-    unsigned int rcl_wait_timeout = 1000;   // in ms
+    unsigned int rcl_wait_timeout = 1000; // in ms
     RCCHECK(rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(rcl_wait_timeout)));
     RCCHECK(rclc_executor_add_timer(&executor, &timer));
     pipebot_msgs__msg__Leds leds_msg;
-	RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_leds, &leds_msg, &subscription_callback_leds, ON_NEW_DATA));
+    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_leds, &leds_msg, &subscription_callback_leds, ON_NEW_DATA));
     raspi_robot_msgs__msg__Motors motors_msg;
-	RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_motors, &motors_msg, &subscription_callback_motors, ON_NEW_DATA));
+    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_motors, &motors_msg, &subscription_callback_motors, ON_NEW_DATA));
 
     raspi_robot_init();
     raspi_robot_set_led(RASPI_ROBOT_LED_ESP_BLUE, RASPI_ROBOT_LED_FLASH_2HZ);
 
-    while(1){
+    while (1)
+    {
         rclc_executor_spin_some(&executor, 100);
         usleep(US_PER_TICK);
         raspi_robot_tick();
