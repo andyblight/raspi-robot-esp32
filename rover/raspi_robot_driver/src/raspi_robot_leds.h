@@ -18,7 +18,7 @@ void leds_tick(void);
 /**
  * @brief Controls the given LED.
  *
- * @param led The LED to control.
+ * @param led_in The LED to control.
  * @param flash_rate The flash rate to set.
  */
 void leds_set(const raspi_robot_led_t led_in, const raspi_robot_led_flash_t flash_rate);
