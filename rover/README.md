@@ -14,22 +14,22 @@ The
 was chosen as I had it lying around, it was simple and I had all the
 documentation.
 
-![RasPiRobot Rover Robot](RasPiRobot.jpg "RasPiRobot Rover Robot")
+![RasPiRobot Rover Robot](resources/RasPiRobot.jpg "RasPiRobot Rover Robot")
 
 As part of this kit, there is the RasPiRobot V3f board
 
-![RasPiRobot v3f Board](RasPiRobotv3f.jpg "RasPiRobot V3f board")
+![RasPiRobot v3f Board](resources/RasPiRobotv3f.jpg "RasPiRobot V3f board")
 
 and the HC-SR04 sonar unit.
 
-![HC-SRO4](HC-SR04.jpg "HC-SRO4")
+![HC-SRO4](resources/HC-SR04.jpg "HC-SRO4")
 
-The `docs` directory contains the data sheets used during development of the
+The `resources` directory contains the data sheets used during development of the
 drivers.
 
 ## Development Setup
 
-TODO
+The [docker README.md file](docker/README.md) explains how to setup the environment for the rover.
 
 ## References
 
