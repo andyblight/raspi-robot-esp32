@@ -16,10 +16,13 @@ The project structure is:
   * docker - This docker is command line only and is used purely to build and monitor the ESP32 firmware.
   * raspi_robot_driver - driver software for the RasPiRobot board.
 
+## Done
+
+* The ESP32 docker can be used to build, flash and monitor the ESP32.
+
 ## To do
 
 * Review stuff in other projects that might be useful for this project.  Especially, the 'esp32-raspi-robot' README files.
-* The ESP32 docker can be used to build, flash and monitor the ESP32.
 * The Base station docker can be used to build the micro-ROS software and ROS2 tools, e.g. RQt.
 * Connect the ESP32 to the base station docker and send messages both ways.
 * Add software for the encoders.

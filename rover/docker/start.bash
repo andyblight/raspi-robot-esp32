@@ -9,7 +9,7 @@ docker_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
 CODE_DIR=${docker_dir}/../..
 
 mkdir -p ${WORKSPACE_DIR}
-cp ${docker_dir}/setup_*.bash ${WORKSPACE_DIR}
+cp -f ${docker_dir}/setup_*.bash ${WORKSPACE_DIR}
 
 docker container inspect ${CONTAINER_NAME} &> /dev/null
 if [ $? == 0 ]

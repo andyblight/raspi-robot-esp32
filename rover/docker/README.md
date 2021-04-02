@@ -12,9 +12,11 @@ If you need to change the mounted directory on the container, you need to destro
 
 When the container is running, you can get a Bash user prompt attached to the container using `./attach.bash`.  The `./attach.bash` script can be used to open multiple terminal sessions on the docker container by calling the script as many times as needed.
 
-## Setting up the micro-ROS component for ESP-IDF workspace
+## Verifying the docker
 
-To prove that you have everything setup correctly, build the example `int32_publisher` by following these instructions.
+You should do this the first time you setup the docker and after every change to the docker or related scripts.
+
+Build and run the example `int32_publisher` by following these instructions.
 
 Open a new shell on the docker (use `attach.bash`), then enter the commands:
 
@@ -38,7 +40,7 @@ docker run -it --rm --net=host microros/micro-ros-agent:foxy udp4 --port 8888 -v
 
 If you examine the output from the agent, you should see messages being sent and received.
 
-## Development work flow
+## Building the RasPiRobot ESP32 software
 
 ### Setup
 
