@@ -9,7 +9,7 @@ docker_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
 CODE_DIR=${docker_dir}/../..
 
 mkdir -p ${WORKSPACE_DIR}
-cp -f ${docker_dir}/setup_*.bash ${WORKSPACE_DIR}
+cp -f ${docker_dir}/setup*.bash ${WORKSPACE_DIR}
 
 docker container inspect ${CONTAINER_NAME} &> /dev/null
 if [ $? == 0 ]
@@ -44,13 +44,3 @@ else
         echo "Please check that the ESP32 is connected and appears on the host as /dev/ttyUSB0."
     fi
 fi
-
-#
-# docker run -it --rm --user espidf \
-# --volume="/etc/timezone:/etc/timezone:ro" \
-# -v  $(pwd):/micro_ros_espidf_component \
-# -v  /dev:/dev \
-# --privileged \
-# --workdir /micro_ros_espidf_component \
-# microros/esp-idf-microros:latest \
-# /bin/bash  -c "cd examples/int32_publisher; idf.py menuconfig build flash monitor"
