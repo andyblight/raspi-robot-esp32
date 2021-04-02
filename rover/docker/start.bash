@@ -33,6 +33,7 @@ else
         --name ${CONTAINER_NAME} \
         --volume ${CODE_DIR}:/home/build/code \
         --volume ${WORKSPACE_DIR}:/home/build/ws \
+        --volume="/etc/timezone:/etc/timezone:ro" \
         --device=/dev/ttyUSB0 \
         ${DOCKER_HUB_USER_NAME}/${IMAGE_NAME}:${IMAGE_TAG} &> /dev/null
     if [ $? == 0 ]

@@ -30,6 +30,10 @@ RUN useradd --create-home --home-dir /home/$USER_ID --shell /bin/bash --user-gro
     echo $USER_ID:$USER_ID | chpasswd && \
     echo "$USER_ID ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+# Add build user to the dialout group to be able to write the serial USB device.
+RUN sed "s/^dialout.*/&$USER_ID/" /etc/group -i \
+    && sed "s/^root.*/&$USER_ID/" /etc/group -i
+
 # Source ESP IDF setup script for each shell.
 RUN echo ". /opt/esp/idf/export.sh" > /home/$USER_ID/.bash_aliases
 
