@@ -42,11 +42,22 @@ If you examine the output from the agent, you should see messages being sent and
 
 ## Building the RasPiRobot ESP32 software
 
-### Setup
+This is I managed to get a project to build.
 
-This is what you need to do every time you start your day.
+```bash
+cd ~/ws/micro_ros_espidf_component/examples
+cp -r int32_publisher raspi_rover
+cd raspi_rover/
+nano CMakeLists.txt
+# Changed name of project to 'raspi_rover'
+idf.py set-target esp32
+idf.py menuconfig
+# Set server address and Wi-Fi SSID and password
+idf.py build
+idf.py flash
+```
 
-TODO
+Now I have to create scripts to copy the files to and from my repo.
 
 ### Building and testing the rover code
 
