@@ -16,6 +16,9 @@ ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
 ros2 run micro_ros_setup configure_firmware.sh int32_publisher -t udp -i 192.168.0.100 -p 8888
 ros2 run micro_ros_setup build_firmware.sh
 
+. $IDF_PATH/export.sh
+pip3 install catkin_pkg lark-parser empy
+
 echo "To build again, run these commands:"
 echo ". install/setup.bash"
 echo "ros2 run micro_ros_setup build_firmware.sh"

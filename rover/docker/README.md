@@ -56,19 +56,26 @@ The second script, `setup_app.bash`, links the `uros/app` directory into
 the workspace and configures a few basic settings.  Run it the same way as the
 first script.
 
-## Test the build
+## Development work flow
 
-These are the commands used to configure, build and flash the code.
+### Setup
+
+This is what you need to do every time you start your day.
+
+TODO
+
+### Building and testing the rover code
+
+TODO
+
+#### Start the ESP IDF monitor
 
 ```bash
-cd ~/ws
-. ./install/setup.bash
-# Configure for the first time or after files have been added.
-ros2 run micro_ros_setup configure_firmware.sh esp32_raspi_bot --transport udp --ip 192.168.2.28 --port 8888
-# Add Wi-Fi credentials using this command.
-ros2 run micro_ros_setup build_firmware.sh menuconfig
-# Build the code.
-ros2 run micro_ros_setup build_firmware.sh
-# Flash the code.
-ros2 run micro_ros_setup flash_firmware.sh
+export IDF_PATH=~/ws/firmware/toolchain/esp-idf/
+. firmware/toolchain/esp-idf/export.sh
+
 ```
+
+Adding ESP-IDF tools to PATH...
+/usr/bin/env: ‘python’: No such file or directory
+

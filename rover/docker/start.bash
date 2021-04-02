@@ -1,12 +1,12 @@
 #!/bin/bash
 # Start the docker container.
 # $1 can be used to pass in a different code directory.
-set -x
+# set -x
 
 docker_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
 . ${docker_dir}/vars.bash
 # Use the repo root dir for the code dir.
-CODE_DIR=${docker_dir}/../../../..
+CODE_DIR=${docker_dir}/../..
 
 mkdir -p ${WORKSPACE_DIR}
 cp ${docker_dir}/setup_*.bash ${WORKSPACE_DIR}
@@ -40,6 +40,16 @@ else
         echo "Container '${CONTAINER_NAME}' running."
     else
         echo "Container '${CONTAINER_NAME}' failed."
-        echo "Plesae check that the ESP32 is connected and appears on the host as /dev/ttyUSB0."
+        echo "Please check that the ESP32 is connected and appears on the host as /dev/ttyUSB0."
     fi
 fi
+
+#
+# docker run -it --rm --user espidf \
+# --volume="/etc/timezone:/etc/timezone:ro" \
+# -v  $(pwd):/micro_ros_espidf_component \
+# -v  /dev:/dev \
+# --privileged \
+# --workdir /micro_ros_espidf_component \
+# microros/esp-idf-microros:latest \
+# /bin/bash  -c "cd examples/int32_publisher; idf.py menuconfig build flash monitor"
