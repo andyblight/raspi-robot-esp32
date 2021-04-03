@@ -23,12 +23,18 @@ https://github.com/espressif/esp-idf/blob/master/examples/peripherals/ledc/main/
 // GPIO pins available according to ESP datasheet.
 // input: 0-19, 21-23, 25-27, 32-39
 // output: 0-19, 21-23, 25-27, 32-33
-// GPIO pins not available.
 //
-// LEDS: 2,22,23
+// Available on board:
+// On board: 2, 4, 5,12,13,14,15,18,19,21,22,23,25,26,27,32,33,34,35
+// Used:     L Se Se Ml Ml Ml    Sw Sw    L  L  Mr Mr Mr So So  E  E
+//
+// GPIO pins used.
+// LEDS: 2,22,23 Note: 2 is for the on board blue LED.
 // SWITCHES: 18,19
 // MOTORS: 12,13,14,25,26,27
 // SONAR: 32,33
+// ENCODERS: 34,35
+// SERVOS: 4,5
 
 // Switch GPIOs
 #define GPIO_SWITCH_SW1 18

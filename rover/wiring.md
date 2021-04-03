@@ -2,7 +2,6 @@
 
 ## Power wiring
 
-```text
 | From | To | Notes |
 |---|---|---|
 | XT60 Connector +ve | Switch |  |
@@ -11,50 +10,47 @@
 | +8V | RRB V+ | For motors |
 | +8V | ESP32 VIN | Max. 15V so fine with 8V |
 | +8V | Convertor In |  |
-| Convertor Out | Servo 1 + | |
-| Convertor Out | Servo 2 + | |
+| Convertor Out | Servo 1 + | 5V at up to 1A |
+| Convertor Out | Servo 2 + | 5V at up to 1A |
 | GND | RRB GND | |
 | GND | RRB pin 6 | |
+| GND | Encoder GND | |
 | ESP32 3v3 | RRB 1 | 3V3 for pull ups for SW1/2 |
+| ESP32 3v3 | Encoder VCC | |
 | RRB motor left 1 | Left motor red | Loose wire |
 | RRB motor left 2 | Left motor black | Loose wire |
 | RRB motor right 1 | Right motor red | Loose wire |
 | RRB motor right 2 | Right motor black | Loose wire |
-```
 
 ## EPS32 to RasPiRover Board
 
-```text
 | ESP32 Pin | Direction | RRB | Notes |
 |---|---|---|---|
+| D12 | Out | 11 | AIN1 |
+| D13 | Out |  7 | AIN2 |
+| D14 | Out | 18 | PWMA |
+| D18 | In | 21 | SW2 |
+| D19 | In | 23 | SW1 |
+| D22 | Out | 24 | LED1 |
+| D23 | Out | 26 | LED2 |
+| D25 | Out | 19 | BIN1 |
+| D26 | Out | 22 | BIN2 |
+| D27 | Out |  8 | PWMB |
+| D32 | Out | 12 | Sonar Trigger |
+| D33 | In | 16 | Sonar Echo |
+| NC | Out | 13 | OC2 |
+| NC | Out | 15 | OC1 |
 | NC | ? |  3 | I2C SDA |
 | NC | ? |  5 | I2C SCL |
-| D? | O |  7 | AIN2 |
-| D? | O |  8 | PWMB |
-| D? | O | 11 | AIN1 |
-| D? | O | 12 | Sonar Trigger |
-| NC | O | 13 | OC2 |
-| NC | O | 15 | OC1 |
-| D? | I | 16 | Sonar Echo |
-| D? | O | 18 | PWMA |
-| D? | O | 19 | BIN1 |
-| NC | I | 21 | SW2 |
-| D? | O | 22 | BIN2 |
-| NC | I | 23 | SW1 |
-| D? | O | 24 | LED1 |
-| D? | O | 26 | LED2 |
-```
 
 ## Other wiring
 
-```text
-| From | To | Notes |
+| ESP32 Pin | Direction | To |
 |---|---|---|
-| ESP32 D?? (output) | Servo 1 PWM | |
-| ESP32 D?? (output) | Servo 2 PWM | |
-| ESP32 D?? (input) | Encoder Left | |
-| ESP32 D?? (input) | Encoder Right | |
-```
+| D4 | Out | Servo 1 PWM |
+| D5 | Out | Servo 2 PWM |
+| D34 | In | Encoder Left |
+| D35 | In | Encoder Right |
 
 ## Notes
 

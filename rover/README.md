@@ -13,14 +13,13 @@ might be useful for other projects.
 
 [Larger image](resources/esp32-wroom.jpg)
 
-The
-[RasPiRobot Rover Robot Kit](https://cpc.farnell.com/monkmakes/sku00049/raspirobot-rover-robot-kit/dp/SC14457)
+The [RasPiRobot Rover Robot Kit](https://cpc.farnell.com/monkmakes/sku00049/raspirobot-rover-robot-kit/dp/SC14457)
 was chosen as I had it lying around, it was simple and I had all the
 documentation.
 
 ![RasPiRobot Rover Robot](resources/RasPiRobot.jpg "RasPiRobot Rover Robot")
 
-As part of this kit, there is the RasPiRobot V3f board
+This kit uses the RasPiRobot V3f board to control the motors and implement the sonar interface
 
 ![RasPiRobot v3f Board](resources/RasPiRobotv3f-thumb.jpg "RasPiRobot V3f board")
 
@@ -29,6 +28,8 @@ As part of this kit, there is the RasPiRobot V3f board
 and the HC-SR04 sonar unit.
 
 ![HC-SRO4](resources/HC-SR04.jpg "HC-SRO4")
+
+The wiring schedule is [here](wiring.md).
 
 The `resources` directory contains the data sheets used during development of the
 drivers.
