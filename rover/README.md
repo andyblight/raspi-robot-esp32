@@ -9,6 +9,10 @@ fitted with at least 4MB of Flash, and the rest is all pretty similar.  The
 ESP32-CAM modules I have don't have enough GPIO pins for this robot but
 might be useful for other projects.
 
+![ESP-WROOM-32](resources/esp32-wroom-thumb.jpg "ESP-WROOM-32")
+
+[Larger image](resources/esp32-wroom.jpg)
+
 The
 [RasPiRobot Rover Robot Kit](https://cpc.farnell.com/monkmakes/sku00049/raspirobot-rover-robot-kit/dp/SC14457)
 was chosen as I had it lying around, it was simple and I had all the
@@ -18,7 +22,9 @@ documentation.
 
 As part of this kit, there is the RasPiRobot V3f board
 
-![RasPiRobot v3f Board](resources/RasPiRobotv3f.jpg "RasPiRobot V3f board")
+![RasPiRobot v3f Board](resources/RasPiRobotv3f-thumb.jpg "RasPiRobot V3f board")
+
+[Larger image](resources/RasPiRobotv3f.jpg)
 
 and the HC-SR04 sonar unit.
 
@@ -41,3 +47,9 @@ Useful links and the pin out of the
 [vfRasPiRobot board schematics](https://github.com/simonmonk/raspirobotboard3).
 
 [Details of the ESP32 board used](https://github.com/Nicholas3388/LuaNode).
+
+## Notes
+
+This way of working is slow and painful.  The Arduino method is much quicker.
+
+Can the Arduino method be used with the ESP32?  The difficulty is micro-ROS.
