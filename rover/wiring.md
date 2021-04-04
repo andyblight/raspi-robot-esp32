@@ -57,9 +57,9 @@
 | SR-04 Name | Colour |
 |---|---|
 | GND | Black |
-| Echo | Purple |
+| Echo | White |
 | Trigger | Grey |
-| VCC | White |
+| VCC | Purple |
 
 ## Servo connections
 

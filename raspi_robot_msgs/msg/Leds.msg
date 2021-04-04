@@ -1,6 +1,5 @@
 # LEDs message definition.
 
-int8 RASPI_ROBOT_LED_ESP_BLUE=0
 int8 RASPI_ROBOT_LED_1=1
 int8 RASPI_ROBOT_LED_2=2
 

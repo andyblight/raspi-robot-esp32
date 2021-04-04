@@ -19,7 +19,7 @@ documentation.
 
 ![RasPiRobot Rover Robot](resources/RasPiRobot.jpg "RasPiRobot Rover Robot")
 
-This kit uses the RasPiRobot V3f board to control the motors and implement the sonar interface
+This kit uses the RasPiRobot V3f board to control the motors and implement the sonar interface.
 
 ![RasPiRobot v3f Board](resources/RasPiRobotv3f-thumb.jpg "RasPiRobot V3f board")
 
