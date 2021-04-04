@@ -52,6 +52,19 @@
 | D34 | In | Encoder Left |
 | D35 | In | Encoder Right |
 
-## Notes
+## Sonar connections
 
-The RasPiRobot board H-bridge motor controller is a TB6612FNG and the data sheet is [here](../resources/TB6612FNG_datasheet_en_20141001.pdf).
+| SR-04 Name | Colour |
+|---|---|
+| GND | Black |
+| Echo | Purple |
+| Trigger | Grey |
+| VCC | White |
+
+## Servo connections
+
+| Name | Colour |
+|---|---|
+| GND | Brown |
+| PWM Input | Orange |
+| VCC | Red |
