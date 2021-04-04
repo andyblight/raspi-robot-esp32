@@ -28,6 +28,12 @@ cd ~/ws
 ./setup_ws.bash
 ```
 
+To verify that the agent has been build correctly, run the command:
+
+```bash
+./install/micro_ros_agent/lib/micro_ros_agent/micro_ros_agent udp4 -p 8888
+```
+
 ## Development work flow
 
 ### Setup
