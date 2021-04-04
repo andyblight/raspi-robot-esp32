@@ -12,8 +12,8 @@ The project structure is:
   * docker - This docker has the full ROS2 desktop and basic graphics.  Includes the micro-ROS agent build.
 * raspi_robot_messages - messages used to communicate between the rover and the base station.
 * rover - software for the rover.
-  * app - the application files for the rover.
   * docker - This docker is command line only and is used purely to build and monitor the ESP32 firmware.
+  * raspi_rover - the application files for the rover.
   * raspi_robot_driver - driver software for the RasPiRobot board.
 
 ## Done

@@ -40,7 +40,7 @@ void micro_ros_task(void * arg)
 	RCCHECK(rcl_init_options_init(&init_options, allocator));
 	rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
 
-	// Static Agent IP and port can be used instead of autodisvery.
+	// Static Agent IP and port can be used instead of autodiscovery.
 	RCCHECK(rmw_uros_options_set_udp_address(CONFIG_MICRO_ROS_AGENT_IP, CONFIG_MICRO_ROS_AGENT_PORT, rmw_options));
 	//RCCHECK(rmw_uros_discover_agent(rmw_options));
 
@@ -87,17 +87,17 @@ void micro_ros_task(void * arg)
 }
 
 void app_main(void)
-{   
+{
 #ifdef UCLIENT_PROFILE_UDP
     // Start the networking if required
     ESP_ERROR_CHECK(uros_network_interface_initialize());
 #endif  // UCLIENT_PROFILE_UDP
 
     //pin micro-ros task in APP_CPU to make PRO_CPU to deal with wifi:
-    xTaskCreate(micro_ros_task, 
-            "uros_task", 
-            CONFIG_MICRO_ROS_APP_STACK, 
+    xTaskCreate(micro_ros_task,
+            "uros_task",
+            CONFIG_MICRO_ROS_APP_STACK,
             NULL,
-            CONFIG_MICRO_ROS_APP_TASK_PRIO, 
-            NULL); 
+            CONFIG_MICRO_ROS_APP_TASK_PRIO,
+            NULL);
 }
