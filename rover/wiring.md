@@ -1,6 +1,6 @@
 # Wiring
 
-## Power wiring
+## Loose power wiring
 
 | From | To | Notes |
 |---|---|---|
@@ -8,19 +8,26 @@
 | XT60 Connector -ve | GND | Bus bars on both boards |
 | Switch | +8V |  |
 | +8V | RRB V+ | For motors |
-| +8V | ESP32 VIN | Max. 15V so fine with 8V |
-| +8V | Convertor In |  |
-| Convertor Out | Servo 1 + | 5V at up to 1A |
-| Convertor Out | Servo 2 + | 5V at up to 1A |
-| GND | RRB GND | |
-| GND | RRB pin 6 | |
-| GND | Encoder GND | |
-| ESP32 3v3 | RRB 1 | 3V3 for pull ups for SW1/2 |
-| ESP32 3v3 | Encoder VCC | |
+| +8V | BDC IN+ | Buck down convertor |
+| XT60 GND | RRB GND | For motors |
+| XT60 GND | BDC IN- | Buck down convertor |
+| BDC OUT+ | Protoboard header + | Output set to 5V5 |
+| BDC OUT- | Protoboard header - | GND for protoboard |
 | RRB motor left 1 | Left motor red | Loose wire |
 | RRB motor left 2 | Left motor black | Loose wire |
 | RRB motor right 1 | Right motor red | Loose wire |
 | RRB motor right 2 | Right motor black | Loose wire |
+
+## Protoboard power wiring
+
+| From | To | Notes |
+|---|---|---|
+| Protoboard header - | GND bar near header | |
+| Protoboard header + | Servo 1 + | 5V5 at up to 1A |
+| Protoboard header + | Servo 2 + | 5V5 at up to 1A |
+| Protoboard header + | ESP32 VIN | Max. 15V so fine with 8V |
+| ESP32 3v3 | Encoder VCC | |
+| ESP32 3v3 | RRB 1 | 3V3 for pull ups for SW1/2 |
 
 ## EPS32 to RasPiRover Board
 
@@ -29,8 +36,6 @@
 | D12 | Out | 11 | AIN1 |
 | D13 | Out |  7 | AIN2 |
 | D14 | Out | 18 | PWMA |
-| D18 | In | 21 | SW2 |
-| D19 | In | 23 | SW1 |
 | D22 | Out | 24 | LED1 |
 | D23 | Out | 26 | LED2 |
 | D25 | Out | 19 | BIN1 |
@@ -43,16 +48,24 @@
 | NC | ? |  3 | I2C SDA |
 | NC | ? |  5 | I2C SCL |
 
-## Other wiring
+## Other ESP32 wiring
 
 | ESP32 Pin | Direction | To |
 |---|---|---|
-| D4 | Out | Servo 1 PWM |
-| D5 | Out | Servo 2 PWM |
-| D34 | In | Encoder Left |
-| D35 | In | Encoder Right |
+| D5 | Out | Servo 1 PWM |
+| D18 | Out | Servo 2 PWM |
+| D19 | In | Encoder Left |
+| D21 | In | Encoder Right |
+| D4 | | Spare |
+| D15 | | Spare |
+| RX0 | | Spare |
+| TX0 | | Spare |
+| RX2 | | Spare |
+| TX2 | | Spare |
 
-## Sonar connections
+## Sonar connector
+
+Connects to the `SONAR` RasPiRobot board connector.
 
 | SR-04 Name | Colour |
 |---|---|
@@ -61,10 +74,10 @@
 | Trigger | Grey |
 | VCC | Purple |
 
-## Servo connections
+## Servo connectors
 
-| Name | Colour |
-|---|---|
-| GND | Brown |
-| PWM Input | Orange |
-| VCC | Red |
+| Name | Colour | Notes |
+|---|---|---|
+| GND | Brown | |
+| VCC | Red | |
+| PWM Input | Orange | ESP32 D4,D5 |

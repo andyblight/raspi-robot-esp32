@@ -35,11 +35,14 @@ In addition, the rover will publish diagnostic messages mainly for debugging pur
 * The ESP32 docker can be used to build, flash and monitor the ESP32.
 * The Base station docker can be used to build the micro-ROS agent and ROS2 tools, e.g. RQt.
 * Define custom messages to be used between rover and base station.
+* Review stuff in other projects that might be useful for this project.  Especially, the 'esp32-raspi-robot' README files.
+* Complete rover wiring.
 
 ## To do
 
 * Build existing software.  The method of building seems to have changed!
-* Review stuff in other projects that might be useful for this project.  Especially, the 'esp32-raspi-robot' README files.
+  * Going back to old way of doing things. Needs more work!!!
+* Two identical dockers, base stations and rover client.  Can I use one?
 * Connect the ESP32 to the base station docker and send messages both ways.
 * Add software for the encoders.
 * Add software for the servos.

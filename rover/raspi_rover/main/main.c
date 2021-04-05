@@ -1,103 +1,161 @@
-#include <string.h>
+#include <rcl/error_handling.h>
+#include <rcl/rcl.h>
+#include <rclc/executor.h>
+#include <rclc/rclc.h>
+#include <rmw_uros/options.h>
+#include <std_msgs/msg/int32.h>
 #include <stdio.h>
 #include <unistd.h>
-
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_log.h"
-#include "esp_system.h"
 
-#include <uros_network_interfaces.h>
-#include <rcl/rcl.h>
-#include <rcl/error_handling.h>
-#include <std_msgs/msg/int32.h>
-#include <rclc/rclc.h>
-#include <rclc/executor.h>
-#include <rmw_uros/options.h>
-#include "uxr/client/config.h"
+#include "../raspi_robot_driver/include/raspi_robot_driver.h"
+#include "raspi_robot_msgs/msg/leds.h"
+#include "raspi_robot_msgs/msg/motors.h"
+#include "raspi_robot_msgs/msg/status.h"
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);vTaskDelete(NULL);}}
-#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
 
-rcl_publisher_t publisher;
-std_msgs__msg__Int32 msg;
+#define RCCHECK(fn)                                                 \
+  {                                                                 \
+    rcl_ret_t temp_rc = fn;                                         \
+    if ((temp_rc != RCL_RET_OK)) {                                  \
+      printf("Failed status on line %d: %d. Aborting.\n", __LINE__, \
+             (int)temp_rc);                                         \
+      vTaskDelete(NULL);                                            \
+    }                                                               \
+  }
+#define RCSOFTCHECK(fn)                                               \
+  {                                                                   \
+    rcl_ret_t temp_rc = fn;                                           \
+    if ((temp_rc != RCL_RET_OK)) {                                    \
+      printf("Failed status on line %d: %d. Continuing.\n", __LINE__, \
+             (int)temp_rc);                                           \
+    }                                                                 \
+  }
 
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
-{
-	RCLC_UNUSED(last_call_time);
-	if (timer != NULL) {
-		RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
-		msg.data++;
-	}
+// Tick definitions.
+#define TICK_RATE_HZ (10)
+#define MS_PER_TICK (1000 / TICK_RATE_HZ)
+#define US_PER_TICK (MS_PER_TICK * 1000)
+
+// Number fo executor handles: one timer, two subscribers.
+#define EXECUTOR_HANDLE_COUNT (3)
+
+rcl_publisher_t publisher_status;
+rcl_subscription_t subscriber_leds;
+rcl_subscription_t subscriber_motors;
+
+// Logging name.
+static const char *TAG = "raspi_rover_main";
+
+static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
+  RCLC_UNUSED(last_call_time);
+  if (timer != NULL) {
+    status_t status;
+    raspi_robot_get_status(&status);
+    raspi_robot_msgs__msg__Status msg;
+    msg.switch1 = status.switch1;
+    msg.switch2 = status.switch2;
+    msg.sonar_mm = status.sonar_mm;
+    RCSOFTCHECK(rcl_publish(&publisher_status, &msg, NULL));
+    ESP_LOGI(TAG, "Sent msg: %d, %d, %d", msg.switch1, msg.switch2,
+             msg.sonar_mm);
+  }
 }
 
-void micro_ros_task(void * arg)
-{
-	rcl_allocator_t allocator = rcl_get_default_allocator();
-	rclc_support_t support;
-
-	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-	RCCHECK(rcl_init_options_init(&init_options, allocator));
-	rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
-
-	// Static Agent IP and port can be used instead of autodiscovery.
-	RCCHECK(rmw_uros_options_set_udp_address(CONFIG_MICRO_ROS_AGENT_IP, CONFIG_MICRO_ROS_AGENT_PORT, rmw_options));
-	//RCCHECK(rmw_uros_discover_agent(rmw_options));
-
-	// create init_options
-	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
-
-	// create node
-	rcl_node_t node;
-	RCCHECK(rclc_node_init_default(&node, "esp32_int32_publisher", "", &support));
-
-	// create publisher
-	RCCHECK(rclc_publisher_init_default(
-		&publisher,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-		"freertos_int32_publisher"));
-
-	// create timer,
-	rcl_timer_t timer;
-	const unsigned int timer_timeout = 1000;
-	RCCHECK(rclc_timer_init_default(
-		&timer,
-		&support,
-		RCL_MS_TO_NS(timer_timeout),
-		timer_callback));
-
-	// create executor
-	rclc_executor_t executor;
-	RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
-	RCCHECK(rclc_executor_add_timer(&executor, &timer));
-
-	msg.data = 0;
-
-	while(1){
-		rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-		usleep(10000);
-	}
-
-	// free resources
-	RCCHECK(rcl_publisher_fini(&publisher, &node));
-	RCCHECK(rcl_node_fini(&node));
-
-  	vTaskDelete(NULL);
+static void subscription_callback_leds(const void *msgin) {
+  const pipebot_msgs__msg__Leds *msg = (const pipebot_msgs__msg__Leds *)msgin;
+  ESP_LOGI(TAG, "Received: %d, %d", msg->led, msg->flash_rate);
+  raspi_robot_set_led(msg->led, msg->flash_rate);
 }
 
-void app_main(void)
-{
+static void subscription_callback_motors(const void *msgin) {
+  const raspi_robot_msgs__msg__Motors *msg =
+      (const raspi_robot_msgs__msg__Motors *)msgin;
+  ESP_LOGI(TAG, "Received: %d, %d, %d", msg->left, msg->right,
+           msg->duration_ms);
+  // Call motor functions.
+  uint16_t ticks = msg->duration_ms / MS_PER_TICK;
+  raspi_robot_motors_drive(msg->left, msg->right, ticks);
+}
+
+void micro_ros_task(void *arg) {
+  rcl_allocator_t allocator = rcl_get_default_allocator();
+  rclc_support_t support;
+
+  // create init_options
+  RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
+
+  // Create node
+  rcl_node_t node = rcl_get_zero_initialized_node();
+  RCCHECK(rclc_node_init_default(&node, "raspi_robot", "", &support));
+
+  // Create status publisher
+  RCCHECK(rclc_publisher_init_default(
+      &publisher_status, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Status),
+      "raspi_robot_status_p"));
+
+  // Create subscribers.
+  RCCHECK(rclc_subscription_init_default(
+      &subscriber_leds, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(pipebot_msgs, msg, Leds),
+      "raspi_robot_leds_s"));
+
+  RCCHECK(rclc_subscription_init_default(
+      &subscriber_motors, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Motors),
+      "raspi_robot_motors_s"));
+
+  // Create timer.
+  rcl_timer_t timer = rcl_get_zero_initialized_timer();
+  const unsigned int timer_timeout = 1000;
+  RCCHECK(rclc_timer_init_default(&timer, &support, RCL_MS_TO_NS(timer_timeout),
+                                  timer_callback));
+
+  // create executor
+  rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
+  RCCHECK(rclc_executor_init(&executor, &support.context, EXECUTOR_HANDLE_COUNT,
+                             &allocator));
+
+  unsigned int rcl_wait_timeout = 1000;  // in ms
+  RCCHECK(rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(rcl_wait_timeout)));
+  RCCHECK(rclc_executor_add_timer(&executor, &timer));
+  pipebot_msgs__msg__Leds leds_msg;
+  RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_leds, &leds_msg,
+                                         &subscription_callback_leds,
+                                         ON_NEW_DATA));
+  raspi_robot_msgs__msg__Motors motors_msg;
+  RCCHECK(rclc_executor_add_subscription(
+      &executor, &subscriber_motors, &motors_msg, &subscription_callback_motors,
+      ON_NEW_DATA));
+
+  raspi_robot_init();
+  raspi_robot_set_led(RASPI_ROBOT_LED_ESP_BLUE, RASPI_ROBOT_LED_FLASH_2HZ);
+
+  while (1) {
+    rclc_executor_spin_some(&executor, 100);
+    usleep(US_PER_TICK);
+    raspi_robot_tick();
+  }
+
+  // free resources
+  RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
+  RCCHECK(rcl_subscription_fini(&subscriber_leds, &node));
+  RCCHECK(rcl_publisher_fini(&publisher_status, &node))
+  RCCHECK(rcl_node_fini(&node))
+
+  vTaskDelete(NULL);
+}
+
+void app_main(void) {
 #ifdef UCLIENT_PROFILE_UDP
-    // Start the networking if required
-    ESP_ERROR_CHECK(uros_network_interface_initialize());
+  // Start the networking if required
+  ESP_ERROR_CHECK(uros_network_interface_initialize());
 #endif  // UCLIENT_PROFILE_UDP
 
-    //pin micro-ros task in APP_CPU to make PRO_CPU to deal with wifi:
-    xTaskCreate(micro_ros_task,
-            "uros_task",
-            CONFIG_MICRO_ROS_APP_STACK,
-            NULL,
-            CONFIG_MICRO_ROS_APP_TASK_PRIO,
-            NULL);
+  // pin micro-ros task in APP_CPU to make PRO_CPU to deal with wifi:
+  xTaskCreate(micro_ros_task, "uros_task", CONFIG_MICRO_ROS_APP_STACK, NULL,
+              CONFIG_MICRO_ROS_APP_TASK_PRIO, NULL);
 }
