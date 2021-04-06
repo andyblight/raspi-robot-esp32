@@ -81,3 +81,31 @@ Connects to the `SONAR` RasPiRobot board connector.
 | GND | Brown | |
 | VCC | Red | |
 | PWM Input | Orange | ESP32 D4,D5 |
+
+## Battery voltage monitor
+
+ESP32 ADCs are 12 bit over a range of 0V to 1.024V.  In practice, the ADC inputs are noisy, using 10 bit resolution averaged over 8 samples is recommended.  Voltage ranges are:
+
+-0dB: 0.04V to 1.024V
+-6dB: 0.08V to 2.00V
+-11dB: 0.1V to ~3.20V
+
+The best result, reading from the graph, seems to be the -0dB for linearity over the range 0.04V (count 1 ish) to 1.00V (count 990 ish).
+
+Absolute maximum input voltage is VDD (the 3V3 pin).
+
+Source: https://www.esp32.com/viewtopic.php?t=1045
+
+### Implementation
+
+ESP32 pin D15 can be used as an ADC input (ADC2_CH3).
+
+A hardware voltage divider is needed to reduce the battery voltage to the ADC voltage range.  I have a limited range of resistors at home so 100k:10k gives 11 to 1 reduction, so 11V range which will work nicely with the 2S battery (7.0 to 8.4V).
+
+## Hall sensor
+
+The ESP32 has a hall sensor.  Can be used for what?
+
+SENSOR_VP, SENSOR_VN feed into SAR ADC 1 inputs.
+
+Could be used to turn off the robot or help with docking.  Needs to be tested.
