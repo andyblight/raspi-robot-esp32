@@ -12,6 +12,8 @@ If you need to change the mounted directory on the container, you need to destro
 
 When the container is running, you can get a Bash user prompt attached to the container using `./attach.bash`.  The `./attach.bash` script can be used to open multiple terminal sessions on the docker container by calling the script as many times as needed.
 
+__IMPORTANT:__ The micro-ROS setup scripts install lots of packages into the the docker container.  Use the `commit.bash` script to save the state of the container after you have successfully built the firmware.  If you don't commit your changes, you will have to run the setup scripts again.
+
 ## Verifying the docker
 
 You should do this the first time you setup the docker and after every change to the docker or related scripts.

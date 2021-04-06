@@ -51,39 +51,6 @@ RUN apt-get update \
         libasio-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Add ESP32 packages.
-# The packages were identified when running 'ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32'
-RUN apt-get install -y --no-install-recommends \
-        python3-pytest-mock \
-        clang-format-10 \
-        python3-nose \
-        libpython2-stdlib libpython2.7-minimal libpython2.7-stdlib \
-        pyflakes pyflakes3 python-pkg-resources python-pyflakes python2 \
-        python2-minimal python2.7 python2.7-minimal \
-    && rm -rf /var/lib/apt/lists/*
-
-# Add even more ESP32 packages.
-# The packages were identified when running 'ros2 run micro_ros_setup configure_firmware.sh int32_publisher'
-RUN apt-get install -y --no-install-recommends \
-        gperf \
-        python3-venv python3.8-venv \
-        ros-foxy-osrf-testing-tools-cpp \
-        liblttng-ctl0 liburcu6 python3-lttng \
-        python3-babeltrace \
-        ros-foxy-cyclonedds ros-foxy-rmw-cyclonedds-cpp \
-    && rm -rf /var/lib/apt/lists/*
-
-# Add yet more ESP32 python packages.
-# The packages were identified when running 'ros2 run micro_ros_setup configure_firmware.sh int32_publisher'
-RUN python3 -m pip install \
-    virtualenv \
-    click \
-    catkin_pkg \
-    lark-parser \
-    empy \
-    docutils \
-    python-dateutil
-
 # Create user with UID and GID matching those on my PC.
 # This allows the user to delete build products created in the source tree.
 # Also add user build to sudoers list.
