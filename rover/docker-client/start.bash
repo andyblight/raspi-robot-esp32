@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start the docker container.
 # $1 can be used to pass in a different code directory.
-set -x
+# set -x
 
 docker_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
 . ${docker_dir}/vars.bash
