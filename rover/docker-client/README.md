@@ -76,3 +76,7 @@ export IDF_PATH=~/ws/firmware/toolchain/esp-idf/
 Adding ESP-IDF tools to PATH...
 /usr/bin/env: ‘python’: No such file or directory
 
+## Notes
+
+To change the IP address of your host PC, edit the file `firmware/mcu_ws/colcon.meta` and modify the option `-DRMW_UXRCE_DEFAULT_UDP_IP=192.168.1.1`.
+
