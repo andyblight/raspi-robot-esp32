@@ -26,57 +26,26 @@ Open a new shell on the docker (use `attach.bash`), then enter the commands:
 ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
 ros2 run micro_ros_setup configure_firmware.sh int32_publisher -t udp -i [your local machine IP] -p 8888
 ros2 run micro_ros_setup build_firmware.sh menuconfig
+```
 
-# Now go to the micro-ROS Transport Settings → WiFi Configuration menu and fill your WiFi SSID and password. Save your changes, exit the interactive menu, and run:
+Change the IP address of your host PC, edit the file `firmware/mcu_ws/colcon.meta` and modify the option `-DRMW_UXRCE_DEFAULT_UDP_IP=192.168.1.1`.
+
+Now go to the micro-ROS Transport Settings → WiFi Configuration menu and fill your WiFi SSID and password. Save your changes, exit the interactive menu, and run:
+
+```bash
 ros2 run micro_ros_setup build_firmware.sh
+```
 
-# Connect your ESP32 to the computer with a micro-USB cable, and run:
+Connect your ESP32 to the computer with a micro-USB cable, and run:
+
+```bash
 ros2 run micro_ros_setup flash_firmware.sh
 ```
 
-Then in another shell, run the pre-build micro-ROS agent using this command:
+Then in another shell, run the pre-built micro-ROS agent using this command:
 
 ```bash
 docker run -it --rm --net=host microros/micro-ros-agent:foxy udp4 --port 8888 -v6
 ```
 
-If you examine the output from the agent, you should see messages being sent and received.
-
-## Building the RasPiRobot ESP32 software
-
-This is I managed to get a project to build.
-
-```bash
-cd ~/ws/micro_ros_espidf_component/examples
-cp -r int32_publisher raspi_rover
-cd raspi_rover/
-nano CMakeLists.txt
-# Changed name of project to 'raspi_rover'
-idf.py set-target esp32
-idf.py menuconfig
-# Set server address and Wi-Fi SSID and password
-idf.py build
-idf.py flash
-```
-
-Now I have to create scripts to copy the files to and from my repo.
-
-### Building and testing the rover code
-
-TODO
-
-#### Start the ESP IDF monitor
-
-```bash
-export IDF_PATH=~/ws/firmware/toolchain/esp-idf/
-. firmware/toolchain/esp-idf/export.sh
-
-```
-
-Adding ESP-IDF tools to PATH...
-/usr/bin/env: ‘python’: No such file or directory
-
-## Notes
-
-To change the IP address of your host PC, edit the file `firmware/mcu_ws/colcon.meta` and modify the option `-DRMW_UXRCE_DEFAULT_UDP_IP=192.168.1.1`.
-
+If you examine the output from the agent, you should see messages being sent and received.  You amy need to reboot the ESP32 (press and release the EM button) for the device to connect.
