@@ -37,11 +37,15 @@ In addition, the rover will publish diagnostic messages mainly for debugging pur
 * Define custom messages to be used between rover and base station.
 * Review stuff in other projects that might be useful for this project.  Especially, the 'esp32-raspi-robot' README files.
 * Complete rover wiring.
+* Docker-client works for example code.
 
 ## To do
 
 * Build existing software.  The method of building seems to have changed!
   * Going back to old way of doing things. Needs more work!!!
+    * Add script to install my code and build it.
+    * Run test code.
+
 * Two identical dockers, base stations and rover client.  Can I use one?
 * Connect the ESP32 to the base station docker and send messages both ways.
 * Add software for the encoders.

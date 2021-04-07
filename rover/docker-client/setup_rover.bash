@@ -2,19 +2,24 @@
 # This script is designed to be run from inside the ESP32 docker.
 set -ex
 
-
+# Ensure ESP32 basics are present.
 ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
-ros2 run micro_ros_setup configure_firmware.sh int32_publisher -t udp -i [your local machine IP] -p 8888
-ros2 run micro_ros_setup build_firmware.sh menuconfig
 
-# Now go to the micro-ROS Transport Settings → WiFi Configuration menu and fill your WiFi SSID and password. Save your changes, exit the interactive menu, and run:
-ros2 run micro_ros_setup build_firmware.sh
+# Link up rover code.
+cd ~/ws
+ln -s ~/code/rover/app/ firmware/freertos_apps/apps/raspi_rover
+ln -s ~/code/raspi_robot_msgs/ firmware/mcu_ws/raspi_robot_msgs
 
-# Connect your ESP32 to the computer with a micro-USB cable, and run:
-ros2 run micro_ros_setup flash_firmware.sh
+
+# Build the new code.
+ros2 run micro_ros_setup configure_firmware.sh raspi_rover -t udp -i 192.168.1.1 -p 8888
 
 echo
-echo "Built rover client successfully.  To flash and monitor your code:"
-echo "idf.py flash"
-echo "idf.py monitor"
+echo "Now use this command:"
+echo "ros2 run micro_ros_setup build_firmware.sh menuconfig"
+echo "to setup the IP address of the host PC, Wi-Fi SSID and password."
+echo
+echo "Then build and flash using:"
+echo "ros2 run micro_ros_setup build_firmware.sh"
+echo "ros2 run micro_ros_setup flash_firmware.sh "
 echo

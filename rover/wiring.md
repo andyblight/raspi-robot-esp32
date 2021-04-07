@@ -43,6 +43,8 @@
 | D27 | Out |  8 | PWMB |
 | D32 | Out | 12 | Sonar Trigger |
 | D33 | In | 16 | Sonar Echo |
+| NC | In | 23 | SW1 |
+| NC | In | 21 | SW2 |
 | NC | Out | 13 | OC2 |
 | NC | Out | 15 | OC1 |
 | NC | ? |  3 | I2C SDA |
