@@ -96,7 +96,7 @@ The best result, reading from the graph, seems to be the -0dB for linearity over
 
 Absolute maximum input voltage is VDD (the 3V3 pin).
 
-Source: https://www.esp32.com/viewtopic.php?t=1045
+Source: <https://www.esp32.com/viewtopic.php?t=1045>
 
 ### Implementation
 

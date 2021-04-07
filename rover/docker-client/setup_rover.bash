@@ -7,9 +7,10 @@ ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
 
 # Link up rover code.
 cd ~/ws
+# It is OK to link the app directory.
 ln -s ~/code/rover/app/ firmware/freertos_apps/apps/raspi_rover
-ln -s ~/code/raspi_robot_msgs/ firmware/mcu_ws/raspi_robot_msgs
-
+# This has to be copied otherwise the build system does not recognise it.
+cp -r ~/code/raspi_robot_msgs/ firmware/mcu_ws
 
 # Build the new code.
 ros2 run micro_ros_setup configure_firmware.sh raspi_rover -t udp -i 192.168.1.1 -p 8888
