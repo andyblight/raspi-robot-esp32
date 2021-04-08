@@ -2,14 +2,33 @@
 # This script is designed to be run from inside the ESP32 docker.
 set -ex
 
-# Ensure ESP32 basics are present.
+# Create a workspace and download the micro-ROS tools
+mkdir -p ~/ws/src
+cd ~/ws/src
+if [ ! -e ~/ws/src/micro_ros_setup ]
+then
+	git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git
+fi
+
+# Source the ROS 2 installation
+source /opt/ros/foxy/setup.bash
+
+# Update dependencies using rosdep
+sudo apt update
+rosdep update
+cd ~/ws
+rosdep install --from-path src --ignore-src -y
+
+# Build micro-ROS tools and source them
+colcon build
+source ./install/local_setup.bash
+
+# Run micro-ROS tools to setup application for ESP32.
 ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
 
-# Link up rover code.
-cd ~/ws
-# It is OK to link the app directory.
-ln -s ~/code/rover/app/ firmware/freertos_apps/apps/raspi_rover
-# This has to be copied otherwise the build system does not recognise it.
+# Copy rover code into workspace.
+cp -r ~/code/rover/app/ firmware/freertos_apps/apps/raspi_rover
+# Packages go in a different directory.
 cp -r ~/code/raspi_robot_msgs/ firmware/mcu_ws
 
 # Build the new code.

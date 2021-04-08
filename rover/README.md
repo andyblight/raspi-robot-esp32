@@ -36,7 +36,7 @@ drivers.
 
 ## Development Setup
 
-The [docker README.md file](docker/README.md) explains how to setup the environment for the rover.
+The [docker README.md file](docker-client/README.md) explains how to setup the environment for the rover.
 
 ## References
 
