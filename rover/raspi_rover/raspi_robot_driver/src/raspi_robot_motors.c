@@ -6,16 +6,16 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/periph
 https://github.com/espressif/esp-idf/blob/master/examples/peripherals/ledc/main/ledc_example_main.c
 */
 
-#include <stdio.h>
+#include "raspi_robot_motors.h"
+
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "esp_log.h"
-
-#include "raspi_robot_motors.h"
 
 // Logging name.
 static const char *TAG = "raspi_robot_motors";
@@ -27,12 +27,12 @@ static const char *TAG = "raspi_robot_motors";
 // Motor controllers
 // Each motor needs three GPIOs, two ordinary to control direction and one PWM.
 // I have used the notation used on the TB6612 device. A is left, B is right.
-#define MOTOR_GPIO_AIN1 (12)     // RPI11
-#define MOTOR_GPIO_AIN2 (13)     // RPI7
-#define MOTOR_GPIO_PWMA (14)     // RPI18
-#define MOTOR_GPIO_BIN1 (25)     // RPI19
-#define MOTOR_GPIO_BIN2 (26)     // RPI22
-#define MOTOR_GPIO_PWMB (27)     // RPI8
+#define MOTOR_GPIO_AIN1 (12)  // RPI11
+#define MOTOR_GPIO_AIN2 (13)  // RPI7
+#define MOTOR_GPIO_PWMA (14)  // RPI18
+#define MOTOR_GPIO_BIN1 (25)  // RPI19
+#define MOTOR_GPIO_BIN2 (26)  // RPI22
+#define MOTOR_GPIO_PWMB (27)  // RPI8
 // Other defines for the motor PWMs.
 #define MOTOR_COUNT (2)
 // Use 8 bits as we only control with range 0 to 100.
@@ -48,22 +48,22 @@ static const char *TAG = "raspi_robot_motors";
 #define MOTOR_MOTOR_VOLTAGE (6.0)
 
 typedef enum motor_mode_tag {
-    MOTOR_MODE_STOP,
-    MOTOR_MODE_CW,
-    MOTOR_MODE_CCW,
-    MOTOR_MODE_SHORT_BRAKE
+  MOTOR_MODE_STOP,
+  MOTOR_MODE_CW,
+  MOTOR_MODE_CCW,
+  MOTOR_MODE_SHORT_BRAKE
 } motor_mode_t;
 
 // Values for a single motor.
 typedef struct {
-    motor_mode_t mode;
-    uint8_t max_duty_value;
-    uint16_t tick_count;
-    int8_t speed;
-    int gpio_in1;
-    int gpio_in2;
-    ledc_mode_t speed_mode;
-    ledc_channel_t channel;
+  motor_mode_t mode;
+  uint8_t max_duty_value;
+  uint16_t tick_count;
+  int8_t speed;
+  int gpio_in1;
+  int gpio_in2;
+  ledc_mode_t speed_mode;
+  ledc_channel_t channel;
 } motor_t;
 
 // Motor instances.
@@ -71,172 +71,160 @@ typedef struct {
 #define MOTOR_INDEX_RIGHT (1)
 static motor_t motors[MOTOR_COUNT];
 
+void motors_init_pwms() {
+  // Prepare and set configuration of timers that will be used by LED
+  // Controller.
+  ledc_timer_config_t ledc_timer = {
+      .duty_resolution = MOTOR_DUTY_RESOLUTION,
+      .freq_hz = MOTOR_PWM_FREQUENCY_HZ,
+      .speed_mode = MOTOR_PWM_SPEED_MODE,
+      .timer_num = MOTOR_PWM_TIMER,
+      .clk_cfg = LEDC_AUTO_CLK,
+  };
+  // Set configuration of timer0 for high speed channels
+  ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
 
-void motors_init_pwms()
-{
-    // Prepare and set configuration of timers that will be used by LED Controller.
-    ledc_timer_config_t ledc_timer = {
-        .duty_resolution = MOTOR_DUTY_RESOLUTION,
-        .freq_hz = MOTOR_PWM_FREQUENCY_HZ,
-        .speed_mode = MOTOR_PWM_SPEED_MODE,
-        .timer_num = MOTOR_PWM_TIMER,
-        .clk_cfg = LEDC_AUTO_CLK,
-    };
-    // Set configuration of timer0 for high speed channels
-    ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+  /*
+   * Prepare individual configuration
+   * for each channel of LED Controller
+   * by selecting:
+   * - controller's channel number
+   * - output duty cycle, set initially to 0
+   * - GPIO number where LED is connected to
+   * - speed mode, either high or low
+   * - timer servicing selected channel
+   *   Note: if different channels use one timer,
+   *         then frequency and bit_num of these channels
+   *         will be the same
+   */
+  ledc_channel_config_t ledc_channel[MOTOR_COUNT] = {
+      {.channel = MOTOR_PWM_CHANNEL_A,
+       .duty = 0,
+       .gpio_num = MOTOR_GPIO_PWMA,
+       .speed_mode = MOTOR_PWM_SPEED_MODE,
+       .hpoint = 0,
+       .timer_sel = MOTOR_PWM_TIMER},
+      {.channel = MOTOR_PWM_CHANNEL_B,
+       .duty = 0,
+       .gpio_num = MOTOR_GPIO_PWMB,
+       .speed_mode = MOTOR_PWM_SPEED_MODE,
+       .hpoint = 0,
+       .timer_sel = MOTOR_PWM_TIMER}};
 
-    /*
-     * Prepare individual configuration
-     * for each channel of LED Controller
-     * by selecting:
-     * - controller's channel number
-     * - output duty cycle, set initially to 0
-     * - GPIO number where LED is connected to
-     * - speed mode, either high or low
-     * - timer servicing selected channel
-     *   Note: if different channels use one timer,
-     *         then frequency and bit_num of these channels
-     *         will be the same
-     */
-    ledc_channel_config_t ledc_channel[MOTOR_COUNT] = {
-        {
-            .channel    = MOTOR_PWM_CHANNEL_A,
-            .duty       = 0,
-            .gpio_num   = MOTOR_GPIO_PWMA,
-            .speed_mode = MOTOR_PWM_SPEED_MODE,
-            .hpoint     = 0,
-            .timer_sel  = MOTOR_PWM_TIMER
-        },
-        {
-            .channel    = MOTOR_PWM_CHANNEL_B,
-            .duty       = 0,
-            .gpio_num   = MOTOR_GPIO_PWMB,
-            .speed_mode = MOTOR_PWM_SPEED_MODE,
-            .hpoint     = 0,
-            .timer_sel  = MOTOR_PWM_TIMER
-        }
-    };
-
-    // Set LED Controller with previously prepared configuration
-    for (int ch = 0; ch < MOTOR_COUNT; ch++) {
-        ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel[ch]));
-    }
+  // Set LED Controller with previously prepared configuration
+  for (int ch = 0; ch < MOTOR_COUNT; ch++) {
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel[ch]));
+  }
 }
 
-
-void motors_init_gpios()
-{
-    // Configure the 4 GPIOs to control direction.
-    gpio_config_t io_conf = {
-        // Bit mask.
-        .pin_bit_mask = BIT64(MOTOR_GPIO_AIN1) | BIT64(MOTOR_GPIO_AIN2) | BIT64(MOTOR_GPIO_BIN1) | BIT64(MOTOR_GPIO_BIN2),
-        // Disable interrupts.
-        .intr_type = GPIO_INTR_DISABLE,
-        // Output mode
-        .mode = GPIO_MODE_OUTPUT,
-        // Disable pull-up/down.
-        .pull_down_en = 0,
-        .pull_up_en = 0
-    };
-    // Configure GPIOs.
-    ESP_ERROR_CHECK(gpio_config(&io_conf));
+void motors_init_gpios() {
+  // Configure the 4 GPIOs to control direction.
+  gpio_config_t io_conf = {
+      // Bit mask.
+      .pin_bit_mask = BIT64(MOTOR_GPIO_AIN1) | BIT64(MOTOR_GPIO_AIN2) |
+                      BIT64(MOTOR_GPIO_BIN1) | BIT64(MOTOR_GPIO_BIN2),
+      // Disable interrupts.
+      .intr_type = GPIO_INTR_DISABLE,
+      // Output mode
+      .mode = GPIO_MODE_OUTPUT,
+      // Disable pull-up/down.
+      .pull_down_en = 0,
+      .pull_up_en = 0};
+  // Configure GPIOs.
+  ESP_ERROR_CHECK(gpio_config(&io_conf));
 }
-
 
 void motor_set_duty(motor_t *motor, int8_t speed_percent) {
-    // Duty is in range 0 to 255 (8 bit range) limited to max_duty_value.
-    uint32_t duty = (speed_percent * motor->max_duty_value) / 100;
-    ESP_LOGI(TAG, "%s, speed%% %d, duty %d ",
-       __FUNCTION__, speed_percent, duty);
-    ESP_ERROR_CHECK(ledc_set_duty(motor->speed_mode, motor->channel, duty));
-    ESP_ERROR_CHECK(ledc_update_duty(motor->speed_mode, motor->channel));
+  // Duty is in range 0 to 255 (8 bit range) limited to max_duty_value.
+  uint32_t duty = (speed_percent * motor->max_duty_value) / 100;
+  ESP_LOGI(TAG, "%s, speed%% %d, duty %d ", __FUNCTION__, speed_percent, duty);
+  ESP_ERROR_CHECK(ledc_set_duty(motor->speed_mode, motor->channel, duty));
+  ESP_ERROR_CHECK(ledc_update_duty(motor->speed_mode, motor->channel));
 }
-
 
 /**
  * @brief Set the given motor to the new mode.
  * @param motor The motor to change.
  * @param new_mode The new mode.
  */
-void motor_set_mode(motor_t *motor, motor_mode_t new_mode)
-{
-    // ESP_LOGI(TAG, "%s, %d, %d", __FUNCTION__, motor->gpio_in1, new_mode);
-    int in1 = 0;
-    int in2 = 0;
-    switch (new_mode) {
-        case MOTOR_MODE_STOP:
-            // Already 00.
-            break;
-        case MOTOR_MODE_CCW:
-            in2 = 1;
-            break;
-        case MOTOR_MODE_CW:
-            in1 = 1;
-            break;
-        case MOTOR_MODE_SHORT_BRAKE:
-            in1 = 1;
-            in2 = 1;
-            break;
-    }
-    gpio_set_level(motor->gpio_in1, in1);
-    gpio_set_level(motor->gpio_in2, in2);
+void motor_set_mode(motor_t *motor, motor_mode_t new_mode) {
+  // ESP_LOGI(TAG, "%s, %d, %d", __FUNCTION__, motor->gpio_in1, new_mode);
+  int in1 = 0;
+  int in2 = 0;
+  switch (new_mode) {
+    case MOTOR_MODE_STOP:
+      // Already 00.
+      break;
+    case MOTOR_MODE_CCW:
+      in2 = 1;
+      break;
+    case MOTOR_MODE_CW:
+      in1 = 1;
+      break;
+    case MOTOR_MODE_SHORT_BRAKE:
+      in1 = 1;
+      in2 = 1;
+      break;
+  }
+  gpio_set_level(motor->gpio_in1, in1);
+  gpio_set_level(motor->gpio_in2, in2);
 }
-
 
 /**
  * @brief Sets the speed, direction and duration of the given motor.
  * @param motor The motor to control.
- * @param speed 0 is stop, +ve is forward (ccw), -ve is reverse (cw), value is speed as percentage of maximum.
+ * @param speed 0 is stop, +ve is forward (ccw), -ve is reverse (cw), value is
+ * speed as percentage of maximum.
  * @param ticks Duration in ticks.
  */
 void motor_drive(motor_t *motor, int8_t speed, uint32_t ticks) {
-    ESP_LOGI(TAG, "%s called: motor %d, speed %d, ticks %d ",
-        __FUNCTION__, motor->gpio_in1, speed, ticks);
-    // Set the PWM duty cycle, limiting to MOTOR_max_duty_value.
-    uint32_t speed_percent = abs(speed);
-    if (speed_percent > 100) {
-        speed_percent = 100;
-    }
-    motor_set_duty(motor, speed_percent);
-    // Set the new mode.
-    motor_mode_t new_mode = MOTOR_MODE_STOP;
-    if (speed > 0) {
-        new_mode = MOTOR_MODE_CCW;
-    }
-    if (speed < 0) {
-        new_mode = MOTOR_MODE_CW;
-    }
-    motor_set_mode(motor, new_mode);
-    // Now that the hardware has been updated, update the software copies.
-    motor->tick_count = ticks;
-    motor->speed = speed;
+  ESP_LOGI(TAG, "%s called: motor %d, speed %d, ticks %d ", __FUNCTION__,
+           motor->gpio_in1, speed, ticks);
+  // Set the PWM duty cycle, limiting to MOTOR_max_duty_value.
+  uint32_t speed_percent = abs(speed);
+  if (speed_percent > 100) {
+    speed_percent = 100;
+  }
+  motor_set_duty(motor, speed_percent);
+  // Set the new mode.
+  motor_mode_t new_mode = MOTOR_MODE_STOP;
+  if (speed > 0) {
+    new_mode = MOTOR_MODE_CCW;
+  }
+  if (speed < 0) {
+    new_mode = MOTOR_MODE_CW;
+  }
+  motor_set_mode(motor, new_mode);
+  // Now that the hardware has been updated, update the software copies.
+  motor->tick_count = ticks;
+  motor->speed = speed;
 }
 
 #if TESTING
 // Test all combinations of motor_mode using both motors.
 void motor_test_motor_set_mode(int state) {
-    // Cycle through all four combinations on both motors.
-    int mode_state = state % 4;
-    motor_mode_t new_mode = MOTOR_MODE_STOP;
-    switch(mode_state) {
-        case 0:
-            new_mode = MOTOR_MODE_SHORT_BRAKE;
-            break;
-        case 1:
-            new_mode = MOTOR_MODE_CCW;
-            break;
-        case 2:
-            new_mode = MOTOR_MODE_CW;
-            break;
-        case 3:
-            // Drop through.
-        default:
-            // Use default (stop).
-            break;
-    }
-    // Use motor 0 first, then 1 and repeat.
-    int motor_select = (state % 8) / 4;
-    motor_set_mode(&(motors[motor_select]), new_mode);
+  // Cycle through all four combinations on both motors.
+  int mode_state = state % 4;
+  motor_mode_t new_mode = MOTOR_MODE_STOP;
+  switch (mode_state) {
+    case 0:
+      new_mode = MOTOR_MODE_SHORT_BRAKE;
+      break;
+    case 1:
+      new_mode = MOTOR_MODE_CCW;
+      break;
+    case 2:
+      new_mode = MOTOR_MODE_CW;
+      break;
+    case 3:
+      // Drop through.
+    default:
+      // Use default (stop).
+      break;
+  }
+  // Use motor 0 first, then 1 and repeat.
+  int motor_select = (state % 8) / 4;
+  motor_set_mode(&(motors[motor_select]), new_mode);
 }
 
 /**
@@ -244,119 +232,114 @@ void motor_test_motor_set_mode(int state) {
  * @note The motor_mode function has been tested elsewhere.
  * @param state The state value.
  */
-void motor_test_motor_drive(int state)
-{
-    uint32_t duration_ms = 1500;
-    int8_t speed = 0;
-    const int max_states = 7;
-    int mode_state = state % max_states;
-    switch(mode_state) {
-        case 0:
-            // Forward, 50%
-            speed = +50;
-            break;
-        case 1:
-            // Forward, 100%
-            speed = +100;
-            break;
-        case 2:
-            // Forward, 120%.  Should limit.
-            speed = +120;
-            break;
-        case 3:
-            // Reverse, 50%
-            speed = -50;
-            break;
-        case 4:
-            // Reverse, 100%
-            speed = -100;
-            break;
-        case 5:
-            // Reverse, 120%.  Should limit.
-            speed = -120;
-            break;
-        case 6:
-            // Drop through
-        default:
-            // 0%.  Should stop.
-            break;
-    }
-    // Use motor 0 first, then 1 and repeat.
-    int motor_select = (state % (max_states * 2)) / max_states;
-    motor_drive(&(motors[motor_select]), speed, duration_ms);
+void motor_test_motor_drive(int state) {
+  uint32_t duration_ms = 1500;
+  int8_t speed = 0;
+  const int max_states = 7;
+  int mode_state = state % max_states;
+  switch (mode_state) {
+    case 0:
+      // Forward, 50%
+      speed = +50;
+      break;
+    case 1:
+      // Forward, 100%
+      speed = +100;
+      break;
+    case 2:
+      // Forward, 120%.  Should limit.
+      speed = +120;
+      break;
+    case 3:
+      // Reverse, 50%
+      speed = -50;
+      break;
+    case 4:
+      // Reverse, 100%
+      speed = -100;
+      break;
+    case 5:
+      // Reverse, 120%.  Should limit.
+      speed = -120;
+      break;
+    case 6:
+      // Drop through
+    default:
+      // 0%.  Should stop.
+      break;
+  }
+  // Use motor 0 first, then 1 and repeat.
+  int motor_select = (state % (max_states * 2)) / max_states;
+  motor_drive(&(motors[motor_select]), speed, duration_ms);
 }
 
-void motor_test_tick()
-{
-    static int tick_count = 0;
-    static int state = 0;
-    // Change state every 2 seconds (20 ticks).
-    ++tick_count;
-    if (tick_count % 20 == 0) {
-        ESP_LOGI(TAG, "%s, %d", __FUNCTION__, state);
-        // motor_test_motor_set_mode(state);
-        motor_test_motor_drive(state);
-        ++state;
-    }
+void motor_test_tick() {
+  static int tick_count = 0;
+  static int state = 0;
+  // Change state every 2 seconds (20 ticks).
+  ++tick_count;
+  if (tick_count % 20 == 0) {
+    ESP_LOGI(TAG, "%s, %d", __FUNCTION__, state);
+    // motor_test_motor_set_mode(state);
+    motor_test_motor_drive(state);
+    ++state;
+  }
 }
 #endif  // TESTING
 
 /********* API functions *********/
 
-void motors_init()
-{
-    motors_init_gpios();
-    motors_init_pwms();
-    // Calculate the maximum duty cycle for the motors as a percentage.
-    // Using 8 bit duty resolution.
-    const int max_duty = 255;
-    uint8_t max_duty_value = (uint8_t)((max_duty * MOTOR_MOTOR_VOLTAGE) / MOTOR_BATTERY_VOLTAGE);
-    for (int i = 0; i < MOTOR_COUNT; ++i) {
-        motor_t * motor = &(motors[i]);
-        motor->tick_count = 0;
-        motor->max_duty_value = max_duty_value;
-        motor->speed = 0;
-        motor->speed_mode = MOTOR_PWM_SPEED_MODE;
-        if (i == MOTOR_INDEX_LEFT) {
-            motor->gpio_in1 = MOTOR_GPIO_AIN1;
-            motor->gpio_in2 = MOTOR_GPIO_AIN2;
-            motor->channel = MOTOR_PWM_CHANNEL_A;
-        }
-        if (i == MOTOR_INDEX_RIGHT) {
-            motor->gpio_in1 = MOTOR_GPIO_BIN1;
-            motor->gpio_in2 = MOTOR_GPIO_BIN2;
-            motor->channel = MOTOR_PWM_CHANNEL_B;
-        }
+void motors_init() {
+  motors_init_gpios();
+  motors_init_pwms();
+  // Calculate the maximum duty cycle for the motors as a percentage.
+  // Using 8 bit duty resolution.
+  const int max_duty = 255;
+  uint8_t max_duty_value =
+      (uint8_t)((max_duty * MOTOR_MOTOR_VOLTAGE) / MOTOR_BATTERY_VOLTAGE);
+  for (int i = 0; i < MOTOR_COUNT; ++i) {
+    motor_t *motor = &(motors[i]);
+    motor->tick_count = 0;
+    motor->max_duty_value = max_duty_value;
+    motor->speed = 0;
+    motor->speed_mode = MOTOR_PWM_SPEED_MODE;
+    if (i == MOTOR_INDEX_LEFT) {
+      motor->gpio_in1 = MOTOR_GPIO_AIN1;
+      motor->gpio_in2 = MOTOR_GPIO_AIN2;
+      motor->channel = MOTOR_PWM_CHANNEL_A;
     }
-    ESP_LOGI(TAG, "Motors initialised");
+    if (i == MOTOR_INDEX_RIGHT) {
+      motor->gpio_in1 = MOTOR_GPIO_BIN1;
+      motor->gpio_in2 = MOTOR_GPIO_BIN2;
+      motor->channel = MOTOR_PWM_CHANNEL_B;
+    }
+  }
+  ESP_LOGI(TAG, "Motors initialised");
 }
 
-
-void motors_tick()
-{
-    for (int i = 0; i < MOTOR_COUNT; ++i) {
-        motor_t * motor = &(motors[i]);
-        if (motor->tick_count > 0) {
-            --motor->tick_count;
-            ESP_LOGI(TAG, "%s, motor %d, speed %d, tick_count %d",
-                __FUNCTION__, motor->gpio_in1, motor->speed, motor->tick_count);
-            if (motor->speed != 0 && motor->tick_count <= 0) {
-                ESP_LOGI(TAG, "%s, stopping motor %d", __FUNCTION__, motor->gpio_in1);
-                motor_set_mode(motor, MOTOR_MODE_STOP);
-                motor_set_duty(motor, 0);
-                motor->speed = 0;
-                motor->tick_count = 0;
-            }
-        }
+void motors_tick() {
+  for (int i = 0; i < MOTOR_COUNT; ++i) {
+    motor_t *motor = &(motors[i]);
+    if (motor->tick_count > 0) {
+      --motor->tick_count;
+      ESP_LOGI(TAG, "%s, motor %d, speed %d, tick_count %d", __FUNCTION__,
+               motor->gpio_in1, motor->speed, motor->tick_count);
+      if (motor->speed != 0 && motor->tick_count <= 0) {
+        ESP_LOGI(TAG, "%s, stopping motor %d", __FUNCTION__, motor->gpio_in1);
+        motor_set_mode(motor, MOTOR_MODE_STOP);
+        motor_set_duty(motor, 0);
+        motor->speed = 0;
+        motor->tick_count = 0;
+      }
     }
+  }
 #if TESTING
-    motor_test_tick();
+  motor_test_tick();
 #endif
 }
 
-void motors_drive(int8_t speed_left, int8_t speed_right, uint16_t ticks)
-{
-    ESP_LOGI(TAG, "%s, %d, %d, %d", __FUNCTION__, speed_left, speed_right, ticks);
-    motor_drive(&(motors[MOTOR_INDEX_LEFT]), speed_left, ticks);
-    motor_drive(&(motors[MOTOR_INDEX_RIGHT]), speed_right, ticks);
+void motors_drive(int8_t speed_left, int8_t speed_right, uint16_t ticks) {
+  ESP_LOGI(TAG, "%s, %d, %d, %d", __FUNCTION__, speed_left, speed_right, ticks);
+  motor_drive(&(motors[MOTOR_INDEX_LEFT]), speed_left, ticks);
+  motor_drive(&(motors[MOTOR_INDEX_RIGHT]), speed_right, ticks);
 }

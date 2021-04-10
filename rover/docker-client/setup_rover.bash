@@ -27,9 +27,12 @@ source ./install/local_setup.bash
 ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
 
 # Copy rover code into workspace.
-cp -r ~/code/rover/app/ firmware/freertos_apps/apps/raspi_rover
+cp -r /home/build/code/rover/raspi_rover/ firmware/freertos_apps/apps
 # Packages go in a different directory.
 cp -r ~/code/raspi_robot_msgs/ firmware/mcu_ws
+# Apply patch to CMakeLists.txt file so it picks up the app.cmake file.
+cd ~/ws/firmware/freertos_apps
+git apply ~/code/rover/docker-client/CMakeLists.patch
 
 # Build the new code.
 ros2 run micro_ros_setup configure_firmware.sh raspi_rover -t udp -i 192.168.1.1 -p 8888

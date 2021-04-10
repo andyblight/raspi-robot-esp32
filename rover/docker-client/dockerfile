@@ -53,22 +53,28 @@ RUN apt-get update \
 
 # Create user with UID and GID matching those on my PC.
 # This allows the user to delete build products created in the source tree.
-# Also add user build to sudoers list.
-RUN groupadd -g 1000 build && \
-    useradd -u 1000 -g 1000 -m -s /bin/bash build && \
+# Also adds the user to sudoers list.
+ARG USER_ID=build
+RUN groupadd -g 1000 $USER_ID && \
+    useradd -u 1000 -g 1000 -m -s /bin/bash $USER_ID && \
     mkdir -p /etc/sudoers.d/ && \
-    echo "build ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/build && \
-    chmod 0440 /etc/sudoers.d/build
-ENV HOME /home/build
+    echo "$USER_ID ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USER_ID && \
+    chmod 0440 /etc/sudoers.d/$USER_ID
+ENV HOME /home/$USER_ID
+
+# Add user to the dialout group to be able to write the serial USB device.
+RUN sed "s/^dialout.*/&$USER_ID/" /etc/group -i \
+    && sed "s/^root.*/&$USER_ID/" /etc/group -i
 
 # Source ROS2 setup script for each shell.
 RUN echo ". /opt/ros/foxy/setup.bash" > /home/build/.bash_aliases
+RUN echo "TERM=xterm-256color" >> /home/build/.bash_aliases
 
-# Change ownership of build directory to build:build.
-RUN chown -R build:build /home/build/
+# Change ownership of user home directory to user:user.
+RUN chown -R $USER_ID:$USER_ID /home/$USER_ID/
 
 # Use display
 ENV DISPLAY :1.0
 
-# Change to user build.
-USER build
+# Change to user.
+USER $USER_ID

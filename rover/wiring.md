@@ -60,6 +60,8 @@
 | D21 | In | Encoder Right |
 | D4 | | Spare |
 | D15 | | Spare |
+| D34 | | Spare |
+| D35 | | Spare |
 | RX0 | | Spare |
 | TX0 | | Spare |
 | RX2 | | Spare |

@@ -1,0 +1,22 @@
+diff --git a/microros_esp32_extensions/main/CMakeLists.txt b/microros_esp32_extensions/main/CMakeLists.txt
+index 19c451f..1d8f60b 100644
+--- a/microros_esp32_extensions/main/CMakeLists.txt
++++ b/microros_esp32_extensions/main/CMakeLists.txt
+@@ -1,6 +1,14 @@
+-file(GLOB SRCS ${UROS_APP_FOLDER}/*.c*)
+-idf_component_register(SRCS main.c microros_transports.c ${SRCS}
+-                       INCLUDE_DIRS ".")
++# message("AJB: UROS_APP_FOLDER: " ${UROS_APP_FOLDER})
++if(DEFINED UROS_APP_FOLDER)
++    include(${UROS_APP_FOLDER}/app.cmake)
++endif()
++# message("AJB: UROS_APP_INCLUDES: " ${UROS_APP_INCLUDES})
++# message("AJB: UROS_APP_SRCS: " ${UROS_APP_SRCS})
++
++idf_component_register(SRCS main.c microros_transports.c ${UROS_APP_SRCS}
++                       INCLUDE_DIRS "." ${UROS_APP_INCLUDES}
++)
++
+ 
+ set(EXTENSIONS_DIR ${COMPONENT_DIR}/..)
+ set(UROS_DIR       ${COMPONENT_DIR}/../../../mcu_ws)
