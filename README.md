@@ -38,24 +38,26 @@ In addition, the rover will publish diagnostic messages mainly for debugging pur
 * Review stuff in other projects that might be useful for this project.  Especially, the 'esp32-raspi-robot' README files.
 * Complete rover wiring.
 * Docker-client works for example code.
+* Build existing software.  The method of building seems to have changed!
+  * Going back to old way of doing things.
+    * Add script to install my code and build it.
+    * Run test code.  Works with pre-build agent docker.
 
 ## To do
 
-* Build existing software.  The method of building seems to have changed!
-  * Going back to old way of doing things. Needs more work!!!
-    * Add script to install my code and build it.
-    * Run test code.
+* Connect the ESP32 to the base station docker and send messages both ways.
+  * Get base station software working.
 
 * Two identical dockers, base stations and rover client.  Can I use one?
-* Connect the ESP32 to the base station docker and send messages both ways.
-* Add software for the encoders.
-* Add software for the servos.
 * Implement each message/service and test.
   * Encoders
+    * Add software for the encoders.
   * LEDs
   * Motors
   * Switches
   * Sonar
+    * Add software for the servos.
+  * Add battery status message.
+    * Battery monitoring - Voltage divider onto ADC pin?
 * Make the rover do something interesting!
-* Battery monitoring - Voltage divider onto ADC pin?
 * Define contents of diagnostic messages.
