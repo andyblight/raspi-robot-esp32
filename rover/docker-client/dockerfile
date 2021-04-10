@@ -63,6 +63,7 @@ ENV HOME /home/build
 
 # Source ROS2 setup script for each shell.
 RUN echo ". /opt/ros/foxy/setup.bash" > /home/build/.bash_aliases
+RUN echo "TERM=xterm-256color" >> /home/build/.bash_aliases
 
 # Change ownership of build directory to build:build.
 RUN chown -R build:build /home/build/
