@@ -32,32 +32,39 @@ In addition, the rover will publish diagnostic messages mainly for debugging pur
 
 ## Done
 
-* The ESP32 docker can be used to build, flash and monitor the ESP32.
-* The Base station docker can be used to build the micro-ROS agent and ROS2 tools, e.g. RQt.
-* Define custom messages to be used between rover and base station.
-* Review stuff in other projects that might be useful for this project.  Especially, the 'esp32-raspi-robot' README files.
-* Complete rover wiring.
-* Docker-client works for example code.
-* Build existing software.  The method of building seems to have changed!
+* The ESP32 docker can be used to build, flash and monitor the ESP32. (3hrs)
+* The Base station docker can be used to build the micro-ROS agent and ROS2 tools, e.g. RQt. (4hrs)
+* Define custom messages to be used between rover and base station. (2hrs)
+* Review stuff in other projects that might be useful for this project.  Especially, the 'esp32-raspi-robot' README files. (2hrs)
+* Complete rover wiring. (14 hrs).
+* Docker-client works for example code. (7hrs)
+* Build existing software.  The method of building seems to have changed! (14 hrs).
   * Going back to old way of doing things.
     * Add script to install my code and build it.
-    * Run test code.  Works with pre-build agent docker.
+    * Run test code.  Works with micro-ROS agent docker.
+* Added battery status message. (8 hrs)
+  * Battery monitoring uses voltage divider onto ADC pin.
+    * Accuracy: -0.11V from voltmeter, -0.15 from charger, -0.20V from tester.
+  * Std msg Int32 being used as BatteryState message causes crash.  Issue raised to deal with later.
+  * Tested using micro-ROS agent docker.
+
+Total hours: 54
 
 ## To do
 
 * Connect the ESP32 to the base station docker and send messages both ways.
   * Get base station software working.
-
 * Two identical dockers, base stations and rover client.  Can I use one?
 * Implement each message/service and test.
   * Encoders
     * Add software for the encoders.
+    * Implement publisher.
   * LEDs
+    * Implemented. Needs testing from agent.
   * Motors
-  * Switches
+    * Implemented. Needs testing from agent.
   * Sonar
-    * Add software for the servos.
-  * Add battery status message.
-    * Battery monitoring - Voltage divider onto ADC pin?
+    * Implement service.
+    * Add software to control the servos.
 * Make the rover do something interesting!
 * Define contents of diagnostic messages.
