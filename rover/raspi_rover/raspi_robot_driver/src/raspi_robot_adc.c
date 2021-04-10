@@ -103,7 +103,7 @@ uint32_t adc_battery_voltage() {
   uint32_t scaled_voltage_mv = (voltage_mv * m_battery_channel_range_mv) / 1024;
   ESP_LOGI(TAG, "averaged ADC voltage %dmV, scaled %dmV", voltage_mv,
            scaled_voltage_mv);
-  return voltage_mv;
+  return scaled_voltage_mv;
 }
 
 int16_t adc_hall_effect_sensor() {
