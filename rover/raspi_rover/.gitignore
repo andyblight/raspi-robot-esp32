@@ -1,3 +1,5 @@
-build
+**/build
+# Ignore files generate by the build.
 sdkconfig
 sdkconfig.old
+CMakeLists.txt
