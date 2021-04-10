@@ -2,6 +2,7 @@
 #define RASPI_ROBOT_DRIVER_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
   // The numbered values are used to access an internal array.
@@ -81,5 +82,19 @@ void raspi_robot_set_led(const raspi_robot_led_t led_in,
  */
 void raspi_robot_motors_drive(int8_t speed_left, int8_t speed_right,
                               uint16_t ticks);
+
+/**
+ * @brief Returns the current battery voltage.
+ *
+ * @return The battery voltage in milli-volts.
+ */
+uint32_t raspi_robot_get_battery_voltage();
+
+/**
+ * @brief Gets the value of the hall effect sensor.
+ *
+ * @return int16_t TODO Add meaningful text.
+ */
+int16_t raspi_robot_get_hall_effect();
 
 #endif  // RASPI_ROBOT_DRIVER_H

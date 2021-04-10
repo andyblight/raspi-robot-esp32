@@ -2,6 +2,7 @@
 #define RASPI_ROBOT_SWITCHES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
  * @brief Initialse the given switch.

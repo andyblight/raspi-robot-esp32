@@ -53,7 +53,7 @@ static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
   ESP_LOGI(TAG, "Timer called.");
   RCLC_UNUSED(last_call_time);
   if (timer != NULL) {
-    ESP_LOGI(TAG, "Timer - Pub pointer: %p", &publisher_battery_state);
+    // ESP_LOGI(TAG, "Timer - Pub pointer: %p", &publisher_battery_state);
     // status_t status;
     // raspi_robot_get_status(&status);
     // float voltage = 1.05;
@@ -66,7 +66,7 @@ static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     //          msg.power_supply_technology, msg.present);
 
     std_msgs__msg__Int32 msg;
-    msg.data = 765;
+    msg.data = raspi_robot_get_battery_voltage();
     rcl_ret_t rc = rcl_publish(&publisher_battery_state, &msg, NULL);
     ESP_LOGI(TAG, "Timer msg sent, rc %d", rc);
   }
@@ -103,13 +103,10 @@ void appMain(void *arg) {
   // Create publishers.
   ESP_LOGI(TAG, "Creating publishers");
 
-  ESP_LOGI(TAG, "Pre - Pub pointer: %p", &publisher_battery_state);
   RCCHECK(rclc_publisher_init_default(
       &publisher_battery_state, &node,
       // ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
-      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-      "battery_state"));
-  ESP_LOGI(TAG, "Post - Pub pointer: %p", &publisher_battery_state);
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "battery_state"));
 
   // Create subscribers.
   ESP_LOGI(TAG, "Creating subscribers");
