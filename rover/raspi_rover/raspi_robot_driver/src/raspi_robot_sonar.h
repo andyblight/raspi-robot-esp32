@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-
 /**
  * @brief Initialises the sonar driver.
  * @param output_pin The GPIO pin to use for output.

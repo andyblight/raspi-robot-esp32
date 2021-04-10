@@ -2,6 +2,7 @@
 #define RASPI_ROBOT_LEDS_H
 
 #include <stdint.h>
+
 #include "raspi_robot_driver.h"
 
 /**
@@ -21,6 +22,7 @@ void leds_tick(void);
  * @param led_in The LED to control.
  * @param flash_rate The flash rate to set.
  */
-void leds_set(const raspi_robot_led_t led_in, const raspi_robot_led_flash_t flash_rate);
+void leds_set(const raspi_robot_led_t led_in,
+              const raspi_robot_led_flash_t flash_rate);
 
 #endif  // RASPI_ROBOT_LEDS_H
