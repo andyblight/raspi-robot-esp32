@@ -27,7 +27,7 @@ source ./install/local_setup.bash
 ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
 
 # Copy rover code into workspace.
-cp -r ~/code/rover/app/ firmware/freertos_apps/apps/raspi_rover
+cp -r /home/build/code/rover/raspi_rover/ firmware/freertos_apps/apps
 # Packages go in a different directory.
 cp -r ~/code/raspi_robot_msgs/ firmware/mcu_ws
 
