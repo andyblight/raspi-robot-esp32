@@ -17,6 +17,9 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/periph
 
 // Logging name.
 static const char *TAG = "raspi_robot_adc";
+//
+#define DEFAULT_VREF (1100)
+static esp_adc_cal_characteristics_t *m_adc_chars;
 // Battery pin values.
 static adc1_channel_t m_battery_channel = ADC1_CHANNEL_MAX;
 static uint32_t m_battery_channel_range_mv = 0;
@@ -58,6 +61,10 @@ adc1_channel_t pin_to_channel(uint8_t pin) {
 }
 
 void adc_init(uint8_t battery_pin, uint32_t battery_range_mv) {
+  // Configure ADC characteristics.
+  m_adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
+  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_0, ADC_WIDTH_BIT_12,
+                           DEFAULT_VREF, m_adc_chars);
   // Configure ADC1 for use with hall effect sensor.
   adc1_config_width(ADC_WIDTH_BIT_12);
   // Configure battery ADC channel.
@@ -77,28 +84,25 @@ void adc_init(uint8_t battery_pin, uint32_t battery_range_mv) {
 
 void adc_tick(void) {
   // Calling the ADC 10 times a second.
-  static int call_count = 0;
-  ++call_count;
-  if (call_count >= 5) {
-    call_count = 0;
-    if (m_battery_channel != ADC1_CHANNEL_MAX) {
-      int32_t sample = adc1_get_raw(m_battery_channel);
-      if (sample != -1) {
-        m_battery_rolling_average =
-            ((m_battery_rolling_average * (m_battery_num_samples - 1)) +
-             sample) /
-            m_battery_num_samples;
-      }
-      ESP_LOGI(TAG, "sample %d, m_battery_num_samples %d, average %d", sample,
-               m_battery_num_samples, m_battery_rolling_average);
+  if (m_battery_channel != ADC1_CHANNEL_MAX) {
+    int32_t sample = adc1_get_raw(m_battery_channel);
+    if (sample != -1) {
+      m_battery_rolling_average =
+          ((m_battery_rolling_average * (m_battery_num_samples - 1)) + sample) /
+          m_battery_num_samples;
     }
+    // ESP_LOGI(TAG, "sample %d, m_battery_num_samples %d, average %d", sample,
+    //          m_battery_num_samples, m_battery_rolling_average);
   }
 }
 
 // This function scales the averaged 12 bit ADC value to mV.
 uint32_t adc_battery_voltage() {
-  uint32_t voltage_mv = m_battery_rolling_average >> 2;
-  ESP_LOGI(TAG, "scaled %dmV", voltage_mv);
+  uint32_t voltage_mv =
+      esp_adc_cal_raw_to_voltage(m_battery_rolling_average, m_adc_chars);
+  uint32_t scaled_voltage_mv = (voltage_mv * m_battery_channel_range_mv) / 1024;
+  ESP_LOGI(TAG, "averaged ADC voltage %dmV, scaled %dmV", voltage_mv,
+           scaled_voltage_mv);
   return voltage_mv;
 }
 
