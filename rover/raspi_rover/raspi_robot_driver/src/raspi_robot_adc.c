@@ -18,10 +18,10 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/periph
 // Logging name.
 static const char *TAG = "raspi_robot_adc";
 // Battery pin values.
-static adc1_channel_t battery_channel = ADC1_CHANNEL_MAX;
-static uint32_t battery_channel_range_mv = 0;
-static uint16_t battery_rolling_average = 0;
-static const uint16_t num_samples = 8;
+static adc1_channel_t m_battery_channel = ADC1_CHANNEL_MAX;
+static uint32_t m_battery_channel_range_mv = 0;
+static uint16_t m_battery_rolling_average = 0;
+static const uint16_t m_battery_num_samples = 8;
 
 adc1_channel_t pin_to_channel(uint8_t pin) {
   adc1_channel_t channel = ADC1_CHANNEL_MAX;
@@ -61,12 +61,12 @@ void adc_init(uint8_t battery_pin, uint32_t battery_range_mv) {
   // Configure ADC1 for use with hall effect sensor.
   adc1_config_width(ADC_WIDTH_BIT_12);
   // Configure battery ADC channel.
-  battery_channel = pin_to_channel(battery_pin);
-  if (battery_channel != ADC1_CHANNEL_MAX) {
-    battery_channel_range_mv = battery_range_mv;
-    adc1_config_channel_atten(battery_channel, ADC_ATTEN_DB_0);
+  m_battery_channel = pin_to_channel(battery_pin);
+  if (m_battery_channel != ADC1_CHANNEL_MAX) {
+    m_battery_channel_range_mv = battery_range_mv;
+    adc1_config_channel_atten(m_battery_channel, ADC_ATTEN_DB_0);
     gpio_num_t gpio_num = 0;
-    esp_err_t result =  adc1_pad_get_io_num(battery_channel, &gpio_num);
+    esp_err_t result = adc1_pad_get_io_num(m_battery_channel, &gpio_num);
     if (result == ESP_OK) {
       ESP_LOGI(TAG, "ADC using GPIO %d for battery voltage.", gpio_num);
     } else {
@@ -76,34 +76,35 @@ void adc_init(uint8_t battery_pin, uint32_t battery_range_mv) {
 }
 
 void adc_tick(void) {
-  // Calling the ADC 10 time a second causes lots of false values.
-  // Calling the ADC 1 times a second is reliable.
+  // Calling the ADC 10 times a second.
   static int call_count = 0;
   ++call_count;
-  if (call_count >= 10) {
+  if (call_count >= 5) {
     call_count = 0;
-    if (battery_channel != ADC1_CHANNEL_MAX) {
-      int32_t sample = adc1_get_raw(battery_channel);
+    if (m_battery_channel != ADC1_CHANNEL_MAX) {
+      int32_t sample = adc1_get_raw(m_battery_channel);
       if (sample != -1) {
-        battery_rolling_average =
-            ((battery_rolling_average * (num_samples - 1)) + sample) /
-            num_samples;
+        m_battery_rolling_average =
+            ((m_battery_rolling_average * (m_battery_num_samples - 1)) +
+             sample) /
+            m_battery_num_samples;
       }
-      ESP_LOGI(TAG, "sample %d, num_samples %d, average %d", sample,
-               num_samples, battery_rolling_average);
+      ESP_LOGI(TAG, "sample %d, m_battery_num_samples %d, average %d", sample,
+               m_battery_num_samples, m_battery_rolling_average);
     }
   }
 }
 
-// This function scales the averaged 12 bit ADC value.
+// This function scales the averaged 12 bit ADC value to mV.
 uint32_t adc_battery_voltage() {
-  uint32_t scaled_value =
-      (battery_rolling_average * battery_channel_range_mv) >> 8;
-  ESP_LOGI(TAG, "scaled %d", scaled_value);
-  return scaled_value;
+  uint32_t voltage_mv = m_battery_rolling_average >> 2;
+  ESP_LOGI(TAG, "scaled %dmV", voltage_mv);
+  return voltage_mv;
 }
 
 int16_t adc_hall_effect_sensor() {
   // This is really simple!
-  return hall_sensor_read();
+  int16_t hall_sensor_reading = hall_sensor_read();
+  ESP_LOGI(TAG, "hall_sensor_reading %d", hall_sensor_reading);
+  return hall_sensor_reading;
 }
