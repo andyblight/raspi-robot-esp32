@@ -74,3 +74,30 @@ idf_component_register(SRCS main.c microros_transports.c ${UROS_APP_SRCS}
 )
 
 ```
+
+## Testing
+
+To test the custom messages, we need to re-build the agent so that the new messages are used. 
+
+In shell 1:
+
+```bash
+# Copy the mssage package into the agent workspace.
+cd ~/ws/src
+cp -r ../firmware/mcu_ws/raspi_robot_msgs/ .
+# Build the messages.
+cd ~/ws
+colcon build --packages-select raspi_robot_msgs
+. install/local_setup.bash
+# Run the agent.
+ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+```
+
+In shell 2, test the motors and LEDs:
+
+```bash
+cd ~/ws
+. install/local_setup.bash
+ros2 topic pub /raspi_robot_leds raspi_robot_msgs/msg/Leds "{led: 1, flash_rate: 4}"
+ros2 topic pub /raspi_robot_motors raspi_robot_msgs/msg/Motors "{left_percent: 30, right_percent: 30, duration_ms: 1000}"
+```

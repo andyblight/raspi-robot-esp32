@@ -5,12 +5,14 @@ This is a personal project to breathe life into an old Raspberry Pi Rover projec
 The rover is controlled by an ESP32 which is fairly limited, so the ESP32 only controls the rover hardware and communicates with the base station using Wi-Fi.  The base station software runs on the PC inside a docker and is used to send commands to the rover and process data received from the rover's sensors.  This split was decided on so that the hardware and software can be developed separately.
 
 ```text
-----------------    ----------------    --------------
-| Base station | <> | ROS Messages | <> | RasPiRover |
-----------------    ----------------    --------------
+----------------    ----------------    ---------------
+| Base station | <> | ROS Messages | <> | RasPi Rover |
+----------------    ----------------    --------- -----
 ```
 
 ## Project structure
+
+TODO Update this section.
 
 The project structure is:
 
@@ -47,24 +49,35 @@ In addition, the rover will publish diagnostic messages mainly for debugging pur
     * Accuracy: -0.11V from voltmeter, -0.15 from charger, -0.20V from tester.
   * Std msg Int32 being used as BatteryState message causes crash.  Issue raised to deal with later.
   * Tested using micro-ROS agent docker.
+  * Build agent using raspi_robot_msgs.
+    Got bask to a working setup.
+    Agent builds and runs.
+    Added `raspi_robot_msgs` to agent (this took a while, see build_system.md for details).
+  * LEDs
+    * Implemented. Needs testing from agent. Works.
+  * Motors
+    * Implemented. Needs testing from agent. Works.
 
-Total hours: 54
+Total hours: 56
 
 ## To do
 
 * Connect the ESP32 to the base station docker and send messages both ways.
   * Get base station software working.
-* Two identical dockers, base stations and rover client.  Can I use one?
+  * Two identical dockers, base stations and rover client.  Can I use one?
+    YES. Only one workspace needed.
+    Remove base station docker.
 * Implement each message/service and test.
   * Encoders
     * Add software for the encoders.
     * Implement publisher.
-  * LEDs
-    * Implemented. Needs testing from agent.
-  * Motors
-    * Implemented. Needs testing from agent.
   * Sonar
     * Implement service.
     * Add software to control the servos.
 * Make the rover do something interesting!
 * Define contents of diagnostic messages.
+
+
+* Test Arduino style build for ESP32.  
+<https://discourse.ros.org/t/micro-ros-porting-to-esp32/16101/13>
+<https://github.com/micro-ROS/micro_ros_espidf_component/issues/9>

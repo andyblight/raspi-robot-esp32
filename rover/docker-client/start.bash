@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start the docker container.
 # $1 can be used to pass in a different code directory.
-# set -x
+set -x
 
 docker_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
 . ${docker_dir}/vars.bash
@@ -25,11 +25,17 @@ then
         echo "Container '${CONTAINER_NAME}' started."
     fi
 else
+    if [ ! -e /dev/ttyUSB0 ]
+    then
+        echo "/dev/ttyUSB0 not found."
+        echo "Please check that the ESP32 is connected and appears on the host as /dev/ttyUSB0."
+        exit 1
+    fi
     # Container does not exist so run it.
     docker container run \
         --detach \
         --tty \
-        --net=host \
+        --network=host \
         --name ${CONTAINER_NAME} \
         --volume ${CODE_DIR}:/home/build/code \
         --volume ${WORKSPACE_DIR}:/home/build/ws \
