@@ -15,7 +15,7 @@
 #include "raspi_robot_msgs/msg/motors.h"
 //#include "sensor_msgs/msg/battery_state.h"
 #include "diagnostic_msgs/msg/diagnostic_array.h"
-#include "diagnostics.h"
+// #include "diagnostics.h"
 #include "std_msgs/msg/int32.h"
 
 #define RCCHECK(fn)                                                 \
@@ -45,12 +45,14 @@
 #define EXECUTOR_HANDLE_COUNT (3)
 
 rcl_publisher_t publisher_battery_state;
-rcl_publisher_t publisher_diagnostics;
+// rcl_publisher_t publisher_diagnostics;
 rcl_subscription_t subscriber_leds;
 rcl_subscription_t subscriber_motors;
 
 // Logging name.
 static const char *TAG = "raspi_rover";
+// Diagnostics message instance.
+// static diagnostic_msgs__msg__DiagnosticArray *m_diagnostic_array = NULL;
 
 static void publish_battery_state(void) {
   // ESP_LOGI(TAG, "Timer - Pub pointer: %p", &publisher_battery_state);
@@ -70,23 +72,15 @@ static void publish_battery_state(void) {
   RCLC_UNUSED(rc);
 }
 
-static void publish_diagnositics(void) {
-  // Create and initialise instance.
-  diagnostic_msgs__msg__DiagnosticArray *msg =
-      diagnostic_msgs__msg__DiagnosticArray__create();
-  // Fill out message.
-  diagnostics_populate(msg);
-  // Publish and tidy up.
-  rcl_ret_t rc = rcl_publish(&publisher_diagnostics, msg, NULL);
-  RCLC_UNUSED(rc);
-  diagnostic_msgs__msg__DiagnosticArray__destroy(msg);
-}
-
 static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
   ESP_LOGI(TAG, "Timer called.");
   if (timer != NULL) {
     publish_battery_state();
-    publish_diagnositics();
+    // if (m_diagnostic_array) {
+    //   diagnostics_populate();
+    //   rcl_ret_t rc = rcl_publish(&publisher_diagnostics, m_diagnostic_array, NULL);
+    //   RCLC_UNUSED(rc);
+    // }
   }
 }
 
@@ -126,10 +120,11 @@ void appMain(void *arg) {
       // ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "battery_state"));
 
-  RCCHECK(rclc_publisher_init_default(
-      &publisher_diagnostics, &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(diagnostic_msgs, msg, DiagnosticArray),
-      "diagnostics"));
+  // m_diagnostic_array = diagnostics_init();
+  // RCCHECK(rclc_publisher_init_default(
+  //     &publisher_diagnostics, &node,
+  //     ROSIDL_GET_MSG_TYPE_SUPPORT(diagnostic_msgs, msg, DiagnosticArray),
+  //     "diagnostics"));
 
   // Create subscribers.
   ESP_LOGI(TAG, "Creating subscribers");
@@ -184,7 +179,7 @@ void appMain(void *arg) {
   RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
   RCCHECK(rcl_subscription_fini(&subscriber_leds, &node));
   RCCHECK(rcl_publisher_fini(&publisher_battery_state, &node))
-  RCCHECK(rcl_publisher_fini(&publish_diagnositics, &node))
+  // RCCHECK(rcl_publisher_fini(&publish_diagnositics, &node))
   RCCHECK(rcl_node_fini(&node))
 
   vTaskDelete(NULL);

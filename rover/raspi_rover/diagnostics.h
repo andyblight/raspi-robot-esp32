@@ -3,6 +3,7 @@
 
 #include "diagnostic_msgs/msg/diagnostic_array.h"
 
-void diagnostics_populate(diagnostic_msgs__msg__DiagnosticArray *msg);
+diagnostic_msgs__msg__DiagnosticArray *diagnositics_init(void);
+void diagnostics_populate();
 
 #endif // DIAGNOSTICS_H
