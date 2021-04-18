@@ -5,18 +5,20 @@ This is a personal project to breathe life into an old Raspberry Pi Rover projec
 The rover is controlled by an ESP32 which is fairly limited, so the ESP32 only controls the rover hardware and communicates with the base station using Wi-Fi.  The base station software runs on the PC inside a docker and is used to send commands to the rover and process data received from the rover's sensors.  This split was decided on so that the hardware and software can be developed separately.
 
 ```text
-----------------    ----------------    ---------------
-| Base station | <> | ROS Messages | <> | RasPi Rover |
-----------------    ----------------    --------- -----
+----------------    ----------------    --------------    ---------------    -----------------
+| Base station | <> | ROS Messages | <> | uROS Agent | <> | uROS Client | <> | Rover Drivers |
+----------------    ----------------    --------------    ---------------    -----------------
 ```
 
 ## Project structure
 
-TODO Update this section.
-
 The project structure is:
 
-* docker - A docker that allows the micro-ROS client and agent to be built. Also has basic display capabilities.
+* docker - A docker based on Ubuntu server 20.04LTS that has:
+  * The micro-ROS client.
+  * The micro-ROS agent.
+  * Basic display X window capabilities for tools such as RQt. 
+  * Other ROS2 packages needed to control the robot.
 * raspi_robot_messages - messages used to communicate between the rover and the base station.
 * rover - software for the rover.
   * raspi_rover - the application files for the rover.
@@ -26,9 +28,9 @@ The project structure is:
 
 The RasPi Robot Rover designed to be a flexible platform for testing ideas on.  To ensure that the code is easy to modify, the drivers on the rover are deliberately simple and are exposed to the base station so that the software can be rebuilt rapidly without having to rebuild and flash the code for the rover.  All rover messages and services are communicated with the base station using Wi-Fi.
 
-The RasPi Robot Rover custom ROS messages and services are specified in the `raspi_robot_msgs` package.
+The RasPi Robot Rover custom ROS messages and services are defined in the `raspi_robot_msgs` package.
 
-In addition, the rover will publish diagnostic messages mainly for debugging purposes.
+In addition, the rover will publish some diagnostic messages for debugging purposes.
 
 ## Done
 
