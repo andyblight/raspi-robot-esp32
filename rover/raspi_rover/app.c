@@ -14,15 +14,14 @@
 #include "raspi_robot_msgs/msg/leds.h"
 #include "raspi_robot_msgs/msg/motors.h"
 //#include "sensor_msgs/msg/battery_state.h"
-#include "std_msgs/msg/int32.h"
 #include "diagnostic_msgs/msg/diagnostic_array.h"
 #include "diagnostics.h"
+#include "std_msgs/msg/int32.h"
 
 #define RCCHECK(fn)                                                 \
   {                                                                 \
     rcl_ret_t temp_rc = fn;                                         \
-    if ((temp_rc != RCL_RET_OK))                                    \
-    {                                                               \
+    if ((temp_rc != RCL_RET_OK)) {                                  \
       printf("Failed status on line %d: %d. Aborting.\n", __LINE__, \
              (int)temp_rc);                                         \
       vTaskDelete(NULL);                                            \
@@ -31,8 +30,7 @@
 #define RCSOFTCHECK(fn)                                               \
   {                                                                   \
     rcl_ret_t temp_rc = fn;                                           \
-    if ((temp_rc != RCL_RET_OK))                                      \
-    {                                                                 \
+    if ((temp_rc != RCL_RET_OK)) {                                    \
       printf("Failed status on line %d: %d. Continuing.\n", __LINE__, \
              (int)temp_rc);                                           \
     }                                                                 \
@@ -54,8 +52,7 @@ rcl_subscription_t subscriber_motors;
 // Logging name.
 static const char *TAG = "raspi_rover";
 
-static void publish_battery_state(void)
-{
+static void publish_battery_state(void) {
   // ESP_LOGI(TAG, "Timer - Pub pointer: %p", &publisher_battery_state);
   // status_t status;
   // raspi_robot_get_status(&status);
@@ -73,10 +70,10 @@ static void publish_battery_state(void)
   RCLC_UNUSED(rc);
 }
 
-static void publish_diagnositics(void)
-{
+static void publish_diagnositics(void) {
   // Create and initialise instance.
-  diagnostic_msgs__msg__DiagnosticArray * msg = diagnostic_msgs__msg__DiagnosticArray__create();
+  diagnostic_msgs__msg__DiagnosticArray *msg =
+      diagnostic_msgs__msg__DiagnosticArray__create();
   // Fill out message.
   diagnostics_populate(msg);
   // Publish and tidy up.
@@ -85,26 +82,22 @@ static void publish_diagnositics(void)
   diagnostic_msgs__msg__DiagnosticArray__destroy(msg);
 }
 
-static void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
-{
+static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
   ESP_LOGI(TAG, "Timer called.");
-  if (timer != NULL)
-  {
+  if (timer != NULL) {
     publish_battery_state();
     publish_diagnositics();
   }
 }
 
-static void subscription_callback_leds(const void *msgin)
-{
+static void subscription_callback_leds(const void *msgin) {
   const raspi_robot_msgs__msg__Leds *msg =
       (const raspi_robot_msgs__msg__Leds *)msgin;
   ESP_LOGI(TAG, "Received: %d, %d", msg->led, msg->flash_rate);
   raspi_robot_set_led(msg->led, msg->flash_rate);
 }
 
-static void subscription_callback_motors(const void *msgin)
-{
+static void subscription_callback_motors(const void *msgin) {
   const raspi_robot_msgs__msg__Motors *msg =
       (const raspi_robot_msgs__msg__Motors *)msgin;
   ESP_LOGI(TAG, "Received: %d, %d, %d", msg->left_percent, msg->right_percent,
@@ -114,8 +107,7 @@ static void subscription_callback_motors(const void *msgin)
   raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
 }
 
-void appMain(void *arg)
-{
+void appMain(void *arg) {
   rcl_allocator_t allocator = rcl_get_default_allocator();
   rclc_support_t support;
 
@@ -136,7 +128,8 @@ void appMain(void *arg)
 
   RCCHECK(rclc_publisher_init_default(
       &publisher_diagnostics, &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(diagnostic_msgs, msg, DiagnosticArray), "diagnostics"));
+      ROSIDL_GET_MSG_TYPE_SUPPORT(diagnostic_msgs, msg, DiagnosticArray),
+      "diagnostics"));
 
   // Create subscribers.
   ESP_LOGI(TAG, "Creating subscribers");
@@ -163,7 +156,7 @@ void appMain(void *arg)
   RCCHECK(rclc_executor_init(&executor, &support.context, EXECUTOR_HANDLE_COUNT,
                              &allocator));
 
-  unsigned int rcl_wait_timeout = 1000; // in ms
+  unsigned int rcl_wait_timeout = 1000;  // in ms
   RCCHECK(rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(rcl_wait_timeout)));
   RCCHECK(rclc_executor_add_timer(&executor, &timer));
   ESP_LOGI(TAG, "Adding subs");
@@ -180,8 +173,7 @@ void appMain(void *arg)
   raspi_robot_set_led(RASPI_ROBOT_LED_ESP_BLUE, RASPI_ROBOT_LED_FLASH_2HZ);
 
   ESP_LOGI(TAG, "Spinning...");
-  while (1)
-  {
+  while (1) {
     rclc_executor_spin_some(&executor, 100);
     usleep(US_PER_TICK);
     raspi_robot_tick();
