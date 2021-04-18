@@ -2,21 +2,24 @@
 
 This is a personal project to breathe life into an old Raspberry Pi Rover project using an ESP32 CPU, ROS2 and micro-ROS.
 
+## Project structure
+
 The rover is controlled by an ESP32 which is fairly limited, so the ESP32 only controls the rover hardware and communicates with the base station using Wi-Fi.  The base station software runs on the PC inside a docker and is used to send commands to the rover and process data received from the rover's sensors.  This split was decided on so that the hardware and software can be developed separately.
 
 ```text
-----------------    ----------------    --------------    ---------------    -----------------
-| Base station | <> | ROS Messages | <> | uROS Agent | <> | uROS Client | <> | Rover Drivers |
-----------------    ----------------    --------------    ---------------    -----------------
+-----------------------------------------------------------       ----------------------------------------  
+| Base station                                            |       | Rover                                |
+| -----------------    ----------------    -------------- | Wi-Fi | ---------------    ----------------- |
+| | ROS processes | <> | ROS Messages | <> | uROS Agent | <======>| | uROS Client | <> | Rover Drivers | |
+| -----------------    ----------------    -------------- |       | ---------------    ----------------- |
+-----------------------------------------------------------       ---------------------------------------- 
 ```
 
-## Project structure
-
-The project structure is:
+The project software structure shown above is roughly reflected in the directory structure:
 
 * docker - A docker based on Ubuntu server 20.04LTS that has:
-  * The micro-ROS client.
   * The micro-ROS agent.
+  * The micro-ROS client. NOTE: The client has to be build in the same workspace as the agent.
   * Basic display X window capabilities for tools such as RQt. 
   * Other ROS2 packages needed to control the robot.
 * raspi_robot_messages - messages used to communicate between the rover and the base station.
@@ -63,20 +66,35 @@ In addition, the rover will publish some diagnostic messages for debugging purpo
     YES. Only one workspace needed.
     Remove base station docker. DONE. 
     Move client docker and rename. DONE.
+  30mins.
+* 
 
 Total hours: 56
 
 ## To do
 
+* Implement diagnositic message.  
+  * To do bare minimum.  Just report string values.
+
+To contain:
+  * Encoder pulses.
+  * Motor drive values.
+  * Publish on diagnostic message.
 * Implement each message/service and test.
   * Encoders
-    * Add software for the encoders.
-    * Implement publisher.
+    * Add driver for the encoders.
   * Sonar
-    * Implement service.
-    * Add software to control the servos.
+    * Add driver for servos. Must support multiple instances.
+    * Implement service to set position and report distance. 
 * Make the rover do something interesting!
 * Define contents of diagnostic messages.
+* Decide on use of standard messaegs for rover.
+  * `cmd_vel` to move.
+    Will need PID controller as the motors have different characteristics.
+  * `odom` to publish position change based on encoder data.
+    Distance = revolutions * circumference of wheel.
+
+
 
 
 * Test Arduino style build for ESP32.  
