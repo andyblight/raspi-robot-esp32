@@ -13,10 +13,10 @@
 #include "raspi_robot_driver.h"
 #include "raspi_robot_msgs/msg/leds.h"
 #include "raspi_robot_msgs/msg/motors.h"
-//#include "sensor_msgs/msg/battery_state.h"
-#include "diagnostic_msgs/msg/diagnostic_array.h"
+#include "sensor_msgs/msg/battery_state.h"
+// #include "diagnostic_msgs/msg/diagnostic_array.h"
 // #include "diagnostics.h"
-#include "std_msgs/msg/int32.h"
+// #include "std_msgs/msg/int32.h"
 
 #define RCCHECK(fn)                                                 \
   {                                                                 \
@@ -53,22 +53,15 @@ rcl_subscription_t subscriber_motors;
 static const char *TAG = "raspi_rover";
 // Diagnostics message instance.
 // static diagnostic_msgs__msg__DiagnosticArray *m_diagnostic_array = NULL;
+static sensor_msgs__msg__BatteryState *battery_state_msg = NULL;
 
 static void publish_battery_state(void) {
-  // ESP_LOGI(TAG, "Timer - Pub pointer: %p", &publisher_battery_state);
-  // status_t status;
-  // raspi_robot_get_status(&status);
-  // float voltage = 1.05;
-  // sensor_msgs__msg__BatteryState msg;
-  // msg.voltage = voltage;
-  // msg.power_supply_technology =
-  //     sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_LIPO;
-  // msg.present = (voltage > 7.0);
-  // ESP_LOGI(TAG, "Sending msg: %f, %d, %d", msg.voltage,
-  //          msg.power_supply_technology, msg.present);
-  std_msgs__msg__Int32 msg;
-  msg.data = raspi_robot_get_battery_voltage();
-  rcl_ret_t rc = rcl_publish(&publisher_battery_state, &msg, NULL);
+  status_t status;
+  raspi_robot_get_status(&status);
+  // Fill message.
+  battery_state_msg->voltage = raspi_robot_get_battery_voltage();
+  ESP_LOGI(TAG, "Sending msg: %f", battery_state_msg->voltage);
+  rcl_ret_t rc = rcl_publish(&publisher_battery_state, battery_state_msg, NULL);
   RCLC_UNUSED(rc);
 }
 
@@ -78,8 +71,8 @@ static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     publish_battery_state();
     // if (m_diagnostic_array) {
     //   diagnostics_populate();
-    //   rcl_ret_t rc = rcl_publish(&publisher_diagnostics, m_diagnostic_array, NULL);
-    //   RCLC_UNUSED(rc);
+    //   rcl_ret_t rc = rcl_publish(&publisher_diagnostics, m_diagnostic_array,
+    //   NULL); RCLC_UNUSED(rc);
     // }
   }
 }
@@ -105,7 +98,10 @@ void appMain(void *arg) {
   rcl_allocator_t allocator = rcl_get_default_allocator();
   rclc_support_t support;
 
-  // create init_options
+  // Initialise messages.
+  battery_state_msg = sensor_msgs__msg__BatteryState__create();
+
+  // Create init_options
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
   // Create node
@@ -181,6 +177,7 @@ void appMain(void *arg) {
   RCCHECK(rcl_publisher_fini(&publisher_battery_state, &node))
   // RCCHECK(rcl_publisher_fini(&publish_diagnositics, &node))
   RCCHECK(rcl_node_fini(&node))
+  sensor_msgs__msg__BatteryState__destroy(battery_state_msg);
 
   vTaskDelete(NULL);
 }
