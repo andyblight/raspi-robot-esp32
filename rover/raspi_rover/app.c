@@ -16,6 +16,7 @@
 //#include "sensor_msgs/msg/battery_state.h"
 #include "std_msgs/msg/int32.h"
 #include "diagnostic_msgs/msg/diagnostic_status.h"
+#include "rosidl_runtime_c/string_functions.h"
 // #include "diagnostic_msgs/msg/diagnostic_array.h"
 // #include "diagnostic_msgs/msg/key_value.h"
 
@@ -71,6 +72,7 @@ static void publish_battery_state(void)
   std_msgs__msg__Int32 msg;
   msg.data = raspi_robot_get_battery_voltage();
   rcl_ret_t rc = rcl_publish(&publisher_battery_state, &msg, NULL);
+  RCLC_UNUSED(rc);
 }
 
 static void publish_diagnositics(void)
@@ -91,13 +93,13 @@ static void publish_diagnositics(void)
   // TODO Add key value pairs here.
   // Publish and tidy up.
   rcl_ret_t rc = rcl_publish(&publisher_diagnositics, &msg, NULL);
+  RCLC_UNUSED(rc);
   diagnostic_msgs__msg__DiagnosticStatus__fini(&msg);
 }
 
 static void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
 {
   ESP_LOGI(TAG, "Timer called.");
-  RCLC_UNUSED(last_call_time);
   if (timer != NULL)
   {
     publish_battery_state();
