@@ -60,6 +60,8 @@ static void publish_battery_state(void) {
   raspi_robot_get_status(&status);
   // Fill message.
   battery_state_msg->voltage = raspi_robot_get_battery_voltage();
+  battery_state_msg->power_supply_technology = sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_LIPO;
+  battery_state_msg->present = true;
   ESP_LOGI(TAG, "Sending msg: %f", battery_state_msg->voltage);
   rcl_ret_t rc = rcl_publish(&publisher_battery_state, battery_state_msg, NULL);
   RCLC_UNUSED(rc);
@@ -113,8 +115,8 @@ void appMain(void *arg) {
 
   RCCHECK(rclc_publisher_init_default(
       &publisher_battery_state, &node,
-      // ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
-      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "battery_state"));
+      ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
+      "battery_state"));
 
   // m_diagnostic_array = diagnostics_init();
   // RCCHECK(rclc_publisher_init_default(
