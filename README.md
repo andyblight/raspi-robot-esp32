@@ -74,8 +74,15 @@ Total hours: 56
 ## To do
 
 * Implement diagnositic message.  
-  * To do bare minimum.  Just report string values.
-
+  * To do bare minimum.  DONE.
+  * Add array containing:
+    * Robot status.
+      * Raw encoder values.
+      * Raw motor PWM values.
+    * Wi-Fi status.
+      * SSID.
+      * Signal strength.
+      * Connected.
 To contain:
   * Encoder pulses.
   * Motor drive values.
@@ -93,7 +100,7 @@ To contain:
     Will need PID controller as the motors have different characteristics.
   * `odom` to publish position change based on encoder data.
     Distance = revolutions * circumference of wheel.
-
+* Fix RQt.  Missing packages?
 
 
 

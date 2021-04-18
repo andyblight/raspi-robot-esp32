@@ -15,10 +15,8 @@
 #include "raspi_robot_msgs/msg/motors.h"
 //#include "sensor_msgs/msg/battery_state.h"
 #include "std_msgs/msg/int32.h"
-#include "diagnostic_msgs/msg/diagnostic_status.h"
-#include "rosidl_runtime_c/string_functions.h"
-// #include "diagnostic_msgs/msg/diagnostic_array.h"
-// #include "diagnostic_msgs/msg/key_value.h"
+#include "diagnostic_msgs/msg/diagnostic_array.h"
+#include "diagnostics.h"
 
 #define RCCHECK(fn)                                                 \
   {                                                                 \
@@ -49,7 +47,7 @@
 #define EXECUTOR_HANDLE_COUNT (3)
 
 rcl_publisher_t publisher_battery_state;
-rcl_publisher_t publisher_diagnositics;
+rcl_publisher_t publisher_diagnostics;
 rcl_subscription_t subscriber_leds;
 rcl_subscription_t subscriber_motors;
 
@@ -77,24 +75,14 @@ static void publish_battery_state(void)
 
 static void publish_diagnositics(void)
 {
-  diagnostic_msgs__msg__DiagnosticStatus msg;
-  diagnostic_msgs__msg__DiagnosticStatus__init(&msg);
-  rosidl_runtime_c__String__assign(&msg.hardware_id, "A1");
-  // `level` is one of:
-  // diagnostic_msgs__msg__DiagnosticStatus__OK
-  // diagnostic_msgs__msg__DiagnosticStatus__WARN
-  // diagnostic_msgs__msg__DiagnosticStatus__ERROR
-  // diagnostic_msgs__msg__DiagnosticStatus__STALE
-  msg.level = diagnostic_msgs__msg__DiagnosticStatus__OK;
-  // A descriptive message.
-  rosidl_runtime_c__String__assign(&msg.message, "AOK");
-  // Robot name
-  rosidl_runtime_c__String__assign(&msg.name, "RasPiRover");
-  // TODO Add key value pairs here.
+  // Create and initialise instance.
+  diagnostic_msgs__msg__DiagnosticArray * msg = diagnostic_msgs__msg__DiagnosticArray__create();
+  // Fill out message.
+  diagnostics_populate(msg);
   // Publish and tidy up.
-  rcl_ret_t rc = rcl_publish(&publisher_diagnositics, &msg, NULL);
+  rcl_ret_t rc = rcl_publish(&publisher_diagnostics, msg, NULL);
   RCLC_UNUSED(rc);
-  diagnostic_msgs__msg__DiagnosticStatus__fini(&msg);
+  diagnostic_msgs__msg__DiagnosticArray__destroy(msg);
 }
 
 static void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
@@ -147,8 +135,8 @@ void appMain(void *arg)
       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "battery_state"));
 
   RCCHECK(rclc_publisher_init_default(
-      &publisher_diagnositics, &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(diagnostic_msgs, msg, DiagnosticStatus), "diagnositics"));
+      &publisher_diagnostics, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(diagnostic_msgs, msg, DiagnosticArray), "diagnostics"));
 
   // Create subscribers.
   ESP_LOGI(TAG, "Creating subscribers");
@@ -204,6 +192,7 @@ void appMain(void *arg)
   RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
   RCCHECK(rcl_subscription_fini(&subscriber_leds, &node));
   RCCHECK(rcl_publisher_fini(&publisher_battery_state, &node))
+  RCCHECK(rcl_publisher_fini(&publish_diagnositics, &node))
   RCCHECK(rcl_node_fini(&node))
 
   vTaskDelete(NULL);
