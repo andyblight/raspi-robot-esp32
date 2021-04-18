@@ -16,11 +16,9 @@ TODO Update this section.
 
 The project structure is:
 
-* base_station - the base station software.
-  * docker - This docker has the full ROS2 desktop and basic graphics.  Includes the micro-ROS agent build.
+* docker - A docker that allows the micro-ROS client and agent to be built. Also has basic display capabilities.
 * raspi_robot_messages - messages used to communicate between the rover and the base station.
 * rover - software for the rover.
-  * docker - This docker is command line only and is used purely to build and monitor the ESP32 firmware.
   * raspi_rover - the application files for the rover.
   * raspi_robot_driver - driver software for the RasPiRobot board.
 
@@ -49,7 +47,7 @@ In addition, the rover will publish diagnostic messages mainly for debugging pur
     * Accuracy: -0.11V from voltmeter, -0.15 from charger, -0.20V from tester.
   * Std msg Int32 being used as BatteryState message causes crash.  Issue raised to deal with later.
   * Tested using micro-ROS agent docker.
-  * Build agent using raspi_robot_msgs.
+* Build agent using raspi_robot_msgs.
     Got bask to a working setup.
     Agent builds and runs.
     Added `raspi_robot_msgs` to agent (this took a while, see build_system.md for details).
@@ -57,16 +55,17 @@ In addition, the rover will publish diagnostic messages mainly for debugging pur
     * Implemented. Needs testing from agent. Works.
   * Motors
     * Implemented. Needs testing from agent. Works.
+  2hrs
+* Connect the ESP32 to agent docker and send messages both ways.  DONE.
+  * Two identical dockers, base stations and rover client.  Can I use one?
+    YES. Only one workspace needed.
+    Remove base station docker. DONE. 
+    Move client docker and rename. DONE.
 
 Total hours: 56
 
 ## To do
 
-* Connect the ESP32 to the base station docker and send messages both ways.
-  * Get base station software working.
-  * Two identical dockers, base stations and rover client.  Can I use one?
-    YES. Only one workspace needed.
-    Remove base station docker.
 * Implement each message/service and test.
   * Encoders
     * Add software for the encoders.
