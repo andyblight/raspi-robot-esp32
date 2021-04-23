@@ -2,6 +2,7 @@
 #include <rcl/rcl.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
+#include <rcutils/error_handling.h>
 #include <rmw_uros/options.h>
 #include <std_msgs/msg/int32.h>
 #include <stdio.h>
@@ -39,9 +40,9 @@
 #define MS_PER_TICK (1000 / TICK_RATE_HZ)
 #define US_PER_TICK (MS_PER_TICK * 1000)
 
-// Number of executor handles: one timer, two subscribers.
+// Number of executor handles: one timer, two subscribers, one service.
 // Publishers don't count.
-#define EXECUTOR_HANDLE_COUNT (3)
+#define EXECUTOR_HANDLE_COUNT (4)
 
 rcl_publisher_t publisher_battery_state;
 rcl_subscription_t subscriber_leds;
@@ -90,9 +91,11 @@ static void subscription_callback_motors(const void *msgin) {
   raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
 }
 
-void service_sonar_callback(const void * req, void * res){
-  raspi_robot_msgs__srv__Sonar_Request * request = (raspi_robot_msgs__srv__Sonar_Request *) req;
-  raspi_robot_msgs__srv__Sonar_Response * response = (raspi_robot_msgs__srv__Sonar_Response *) res;
+void service_sonar_callback(const void *req, void *res) {
+  raspi_robot_msgs__srv__Sonar_Request *request =
+      (raspi_robot_msgs__srv__Sonar_Request *)req;
+  raspi_robot_msgs__srv__Sonar_Response *response =
+      (raspi_robot_msgs__srv__Sonar_Response *)res;
 
   ESP_LOGI(TAG, "Requested: %d, %d", request->x, request->y);
   // AJB Fake response for now.
@@ -136,6 +139,7 @@ void appMain(void *arg) {
       "raspi_robot_motors"));
 
   // Create services.
+  ESP_LOGI(TAG, "Creating services");
   RCCHECK(rclc_service_init_default(
       &service_sonar, &node,
       ROSIDL_GET_SRV_TYPE_SUPPORT(raspi_robot_msgs, srv, Sonar),
@@ -153,10 +157,10 @@ void appMain(void *arg) {
   rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
   RCCHECK(rclc_executor_init(&executor, &support.context, EXECUTOR_HANDLE_COUNT,
                              &allocator));
-
   unsigned int rcl_wait_timeout = 1000;  // in ms
   RCCHECK(rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(rcl_wait_timeout)));
   RCCHECK(rclc_executor_add_timer(&executor, &timer));
+
   ESP_LOGI(TAG, "Adding subs");
   raspi_robot_msgs__msg__Leds leds_msg;
   RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_leds, &leds_msg,
@@ -166,9 +170,12 @@ void appMain(void *arg) {
   RCCHECK(rclc_executor_add_subscription(
       &executor, &subscriber_motors, &motors_msg, &subscription_callback_motors,
       ON_NEW_DATA));
+
+  ESP_LOGI(TAG, "Adding services");
   raspi_robot_msgs__srv__Sonar_Request request;
   raspi_robot_msgs__srv__Sonar_Response response;
-  RCCHECK(rclc_executor_add_service(&executor, &service_sonar, &request, &response, service_sonar_callback));
+  RCCHECK(rclc_executor_add_service(&executor, &service_sonar, &request,
+                                    &response, &service_sonar_callback));
 
   // Flash the blue LED when running.
   raspi_robot_init();
