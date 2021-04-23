@@ -103,6 +103,8 @@ cp -r ../firmware/mcu_ws/raspi_robot_msgs/ .
 cd ~/ws
 colcon build --packages-select raspi_robot_msgs
 . install/local_setup.bash
+# Build the agent.
+ros2 run micro_ros_setup build_agent.sh
 # Run the agent.
 ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 ```
@@ -115,4 +117,33 @@ cd ~/ws
 ros2 topic pub /raspi_robot_leds raspi_robot_msgs/msg/Leds "{led: 1, flash_rate: 4}"
 ros2 topic pub /raspi_robot_motors raspi_robot_msgs/msg/Motors "{left_percent: 30, right_percent: 30, duration_ms: 1000}"
 ros2 service call /raspi_robot_sonar raspi_robot_msgs/srv/Sonar "{x: 10, y: 20}"
+```
+
+## Changing the custom messages
+
+Changes to the messages need to be copied and built twice, firmware and then agent.  
+
+### Firmware
+
+```bash 
+rm -rf ~/ws/firmware/mcu_ws/raspi_robot_msgs/
+cp -r ~/code/raspi-robot-esp32/raspi_robot_msgs/ ~/ws/firmware/mcu_ws/
+ros2 run micro_ros_setup configure_firmware.sh raspi_rover -t udp -i 192.168.1.1 -p 8888
+ros2 run micro_ros_setup build_firmware.sh
+ros2 run micro_ros_setup flash_firmware.sh
+```
+
+Remember to chnage the IP address to match your server IP. 
+
+The build takes ages after configure_firmware as the entire firmware has to be rebuilt. 
+
+### Agent
+
+```bash 
+rm -rf ~/ws/src/raspi_robot_msgs/
+cp -r ~/code/raspi-robot-esp32/raspi_robot_msgs/ ~/ws/src
+cd ~/ws
+colcon build --packages-select raspi_robot_msgs
+. install/local_setup.bash
+ros2 run micro_ros_setup build_agent.sh
 ```

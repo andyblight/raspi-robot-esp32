@@ -18,6 +18,7 @@ https://github.com/espressif/esp-idf/blob/master/examples/peripherals/ledc/main/
 #include "raspi_robot_adc.h"
 #include "raspi_robot_leds.h"
 #include "raspi_robot_motors.h"
+#include "raspi_robot_servo.h"
 #include "raspi_robot_sonar.h"
 #include "raspi_robot_switches.h"
 
@@ -61,6 +62,8 @@ void raspi_robot_init(void) {
   switches_init(GPIO_SWITCH_SW1);
   switches_init(GPIO_SWITCH_SW2);
   motors_init();
+  servo_init(SERVO_X);
+  servo_init(SERVO_Y);
   sonar_init(GPIO_SONAR_OUT, GPIO_SONAR_IN);
 }
 
@@ -98,4 +101,9 @@ uint32_t raspi_robot_get_battery_voltage() {
 int16_t raspi_robot_get_hall_effect() {
   // Just return the result.
   return adc_hall_effect_sensor();
+}
+
+void raspi_robot_servo_set(int16_t *x, int16_t *y) {
+  *x = servo_set(SERVO_X, *x);
+  *y = servo_set(SERVO_X, *y);
 }

@@ -1,8 +1,8 @@
 #ifndef RASPI_ROBOT_DRIVER_H
 #define RASPI_ROBOT_DRIVER_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef enum {
   // The numbered values are used to access an internal array.
@@ -93,8 +93,17 @@ uint32_t raspi_robot_get_battery_voltage();
 /**
  * @brief Gets the value of the hall effect sensor.
  *
- * @return int16_t TODO Add meaningful text.
+ * @return int16_t TODO I have no idea what the value means.
  */
 int16_t raspi_robot_get_hall_effect();
+
+/**
+ * @brief Set the servo position and returns the value actually set.
+ * @param x The horizontal angle to set in degrees. -180 to +180, 0 centre.
+ * @param y The vertical angle to set in degrees. -180 to +180, 0 horizontal.
+ * @note The angle set may be limited by the implementation so check the values
+ * that x and y are set to after this call.
+ */
+void raspi_robot_servo_set(int16_t *x, int16_t *y);
 
 #endif  // RASPI_ROBOT_DRIVER_H

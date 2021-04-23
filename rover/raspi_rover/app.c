@@ -14,7 +14,7 @@
 #include "raspi_robot_driver.h"
 #include "raspi_robot_msgs/msg/leds.h"
 #include "raspi_robot_msgs/msg/motors.h"
-#include "raspi_robot_msgs/srv/sonar.h"
+#include "raspi_robot_msgs/srv/sonar_position.h"
 #include "sensor_msgs/msg/battery_state.h"
 
 #define RCCHECK(fn)                                                 \
@@ -47,7 +47,7 @@
 rcl_publisher_t publisher_battery_state;
 rcl_subscription_t subscriber_leds;
 rcl_subscription_t subscriber_motors;
-rcl_service_t service_sonar;
+rcl_service_t service_sonar_position;
 
 // Logging name.
 static const char *TAG = "raspi_rover";
@@ -55,8 +55,6 @@ static const char *TAG = "raspi_rover";
 static sensor_msgs__msg__BatteryState *battery_state_msg = NULL;
 
 static void publish_battery_state(void) {
-  status_t status;
-  raspi_robot_get_status(&status);
   // Fill message.
   battery_state_msg->voltage = raspi_robot_get_battery_voltage();
   battery_state_msg->power_supply_technology =
@@ -91,18 +89,19 @@ static void subscription_callback_motors(const void *msgin) {
   raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
 }
 
-void service_sonar_callback(const void *req, void *res) {
-  raspi_robot_msgs__srv__Sonar_Request *request =
-      (raspi_robot_msgs__srv__Sonar_Request *)req;
-  raspi_robot_msgs__srv__Sonar_Response *response =
-      (raspi_robot_msgs__srv__Sonar_Response *)res;
-
-  ESP_LOGI(TAG, "Requested: %d, %d", request->x, request->y);
-  // AJB Fake response for now.
-  response->x = request->x;
-  response->y = request->y;
-  response->distance_mm = 17;
-}
+void service_sonar_position_callback(const void *req, void *res) {
+  status_t status;
+  raspi_robot_msgs__srv__SonarPosition_Request *request =
+      (raspi_robot_msgs__srv__SonarPosition_Request *)req;
+  raspi_robot_msgs__srv__SonarPosition_Response *response =
+      (raspi_robot_msgs__srv__SonarPosition_Response *)res;
+  int16_t x = request->x;
+  int16_t y = request->y;
+  ESP_LOGI(TAG, "Requested: %d, %d", x, y);
+  raspi_robot_servo_set(&x, &y);
+  response->x = x;
+  response->y = y;
+}  
 
 void appMain(void *arg) {
   rcl_allocator_t allocator = rcl_get_default_allocator();
@@ -141,9 +140,9 @@ void appMain(void *arg) {
   // Create services.
   ESP_LOGI(TAG, "Creating services");
   RCCHECK(rclc_service_init_default(
-      &service_sonar, &node,
-      ROSIDL_GET_SRV_TYPE_SUPPORT(raspi_robot_msgs, srv, Sonar),
-      "raspi_robot_sonar"));
+      &service_sonar_position, &node,
+      ROSIDL_GET_SRV_TYPE_SUPPORT(raspi_robot_msgs, srv, SonarPosition),
+      "raspi_robot_sonar_position"));
 
   // Create timer.
   ESP_LOGI(TAG, "Creating timers");
@@ -172,10 +171,10 @@ void appMain(void *arg) {
       ON_NEW_DATA));
 
   ESP_LOGI(TAG, "Adding services");
-  raspi_robot_msgs__srv__Sonar_Request request;
-  raspi_robot_msgs__srv__Sonar_Response response;
-  RCCHECK(rclc_executor_add_service(&executor, &service_sonar, &request,
-                                    &response, &service_sonar_callback));
+  raspi_robot_msgs__srv__SonarPosition_Request request;
+  raspi_robot_msgs__srv__SonarPosition_Response response;
+  RCCHECK(rclc_executor_add_service(&executor, &service_sonar_position, &request,
+                                    &response, &service_sonar_position_callback));
 
   // Flash the blue LED when running.
   raspi_robot_init();
@@ -193,7 +192,7 @@ void appMain(void *arg) {
   RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
   RCCHECK(rcl_subscription_fini(&subscriber_leds, &node));
   RCCHECK(rcl_publisher_fini(&publisher_battery_state, &node))
-  RCCHECK(rcl_service_fini(&service_sonar, &node));
+  RCCHECK(rcl_service_fini(&service_sonar_position, &node));
   RCCHECK(rcl_node_fini(&node))
   sensor_msgs__msg__BatteryState__destroy(battery_state_msg);
 

@@ -23,10 +23,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Encoders.msg"
   "msg/Leds.msg"
   "msg/Motors.msg"
-  "srv/Sonar.srv"
+  "srv/SonarPosition.srv"
 )
 
 if(BUILD_TESTING)
