@@ -75,7 +75,21 @@ idf_component_register(SRCS main.c microros_transports.c ${UROS_APP_SRCS}
 
 ```
 
-## Testing
+## Building the rover code
+
+First time, start the docker and run `./setup_rover.sh`.  
+
+To rebuild and flash the code for the rover inside the docker, 
+
+```bash
+cd ~/ws
+. ./install/local_setup.bash
+cp -r ~/code/raspi-robot-esp32/rover/raspi_rover/ ~/ws/firmware/freertos_apps/apps/
+ros2 run micro_ros_setup build_firmware.sh
+ros2 run micro_ros_setup flash_firmware.sh
+```
+
+## Building the agent
 
 To test the custom messages, we need to re-build the agent so that the new messages are used. 
 
