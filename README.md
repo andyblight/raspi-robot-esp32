@@ -53,7 +53,7 @@ In addition, the rover will publish some diagnostic messages for debugging purpo
   * Std msg Int32 being used as BatteryState message causes crash.  Issue raised to deal with later.
   * Tested using micro-ROS agent docker.
 * Build agent using raspi_robot_msgs.
-    Got bask to a working setup.
+    Got back to a working setup.
     Agent builds and runs.
     Added `raspi_robot_msgs` to agent (this took a while, see build_system.md for details).
   * LEDs
@@ -73,8 +73,7 @@ Total hours: 56
 
 ## To do
 
-* Implement diagnositic message.  
-  * To do bare minimum.  DONE.
+* Implement diagnositic message.  #4
   * Add array containing:
     * Robot status.
       * Raw encoder values.
@@ -83,25 +82,17 @@ Total hours: 56
       * SSID.
       * Signal strength.
       * Connected.
-To contain:
-  * Encoder pulses.
-  * Motor drive values.
-  * Publish on diagnostic message.
 * Implement each message/service and test.
-  * Encoders
-    * Add driver for the encoders.
-  * Sonar
+  * Sonar #8
     * Add driver for servos. Must support multiple instances.
     * Implement service to set position and report distance. 
-* Make the rover do something interesting!
-* Define contents of diagnostic messages.
 * Decide on use of standard messaegs for rover.
-  * `cmd_vel` to move.
+  * `cmd_vel` to move. #5
     Will need PID controller as the motors have different characteristics.
-  * `odom` to publish position change based on encoder data.
+  * `odom` to publish position change based on encoder data. #6
     Distance = revolutions * circumference of wheel.
-* Fix RQt.  Missing packages?
-
+* Fix RQt.  Missing packages? #7
+* Make the rover do something interesting!
 
 
 * Test Arduino style build for ESP32.  
