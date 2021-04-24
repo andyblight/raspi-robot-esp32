@@ -11,6 +11,7 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/periph
 #include <unistd.h>
 
 #include "esp_log.h"
+#include "raspi_robot_led_pwm.h"
 
 #define MAX_SERVOS (2)
 
@@ -24,12 +25,12 @@ static const char* TAG = "raspi_robot_servo";
 
 void servo_init(uint8_t gpio_num) {
   ESP_LOGI(TAG, "Servo using GPIO %d.", gpio_num);
-  led_pwm_gpio_init(gpio_pin);
+  led_pwm_gpio_init(gpio_num);
 }
 
 int16_t servo_set(uint8_t gpio_num, int16_t angle) {
-  uint8_t duty = todo;
-  led_pwm_handle_t *handle = get_handle(gpio_num);
+  uint8_t duty = 0;  // AJB TODO
+  led_pwm_handle_p handle = led_pwm_get_handle(gpio_num);
   led_pwm_set_duty(handle, duty);
   ESP_LOGI(TAG, "Servo set GPIO %d to %d degrees.", gpio_num, angle);
   return angle;
