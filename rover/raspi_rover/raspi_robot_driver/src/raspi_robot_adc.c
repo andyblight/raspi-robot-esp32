@@ -14,6 +14,7 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/periph
 #include "driver/gpio.h"
 #include "esp_adc_cal.h"
 #include "esp_log.h"
+#include "raspi_robot_led_pwm.h"
 
 // Logging name.
 static const char *TAG = "raspi_robot_adc";

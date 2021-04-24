@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 /**
- * @brief Initialse the given switch.
+ * @brief Initialise the given switch.
  *
  * @param gpio_num The GPIO to intitialise.
  */

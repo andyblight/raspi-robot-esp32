@@ -5,7 +5,7 @@
 int8 x
 int8 y
 ---
-# The actual servo positions used.
+# The actual servo positions set.
 # The hardware implementation may limit the range of movement.
 int8 x
 int8 y

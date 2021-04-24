@@ -41,7 +41,7 @@
 #define US_PER_TICK (MS_PER_TICK * 1000)
 
 // Number of executor handles: one timer, two subscribers, one service.
-// Publishers don't count.
+// Publishers don't count as they are driven by the timer.
 #define EXECUTOR_HANDLE_COUNT (4)
 
 rcl_publisher_t publisher_battery_state;
