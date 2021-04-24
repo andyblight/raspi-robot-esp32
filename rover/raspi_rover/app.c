@@ -90,7 +90,6 @@ static void subscription_callback_motors(const void *msgin) {
 }
 
 void service_sonar_position_callback(const void *req, void *res) {
-  status_t status;
   raspi_robot_msgs__srv__SonarPosition_Request *request =
       (raspi_robot_msgs__srv__SonarPosition_Request *)req;
   raspi_robot_msgs__srv__SonarPosition_Response *response =
@@ -101,7 +100,7 @@ void service_sonar_position_callback(const void *req, void *res) {
   raspi_robot_servo_set(&x, &y);
   response->x = x;
   response->y = y;
-}  
+}
 
 void appMain(void *arg) {
   rcl_allocator_t allocator = rcl_get_default_allocator();

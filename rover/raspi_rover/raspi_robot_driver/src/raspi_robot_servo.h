@@ -5,7 +5,6 @@
 
 /**
  * @brief Initialse the given servo.
- *
  * @param gpio_num The GPIO to use for the servo.
  */
 void servo_init(uint8_t gpio_num);

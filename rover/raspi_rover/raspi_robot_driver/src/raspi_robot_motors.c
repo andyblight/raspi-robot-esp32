@@ -35,14 +35,6 @@ static const char *TAG = "raspi_robot_motors";
 #define MOTOR_GPIO_PWMB (27)  // RPI8
 // Other defines for the motor PWMs.
 #define MOTOR_COUNT (2)
-// Use 8 bits as we only control with range 0 to 100.
-#define MOTOR_DUTY_RESOLUTION LEDC_TIMER_8_BIT
-// Using high speed mode as it is easier to control
-#define MOTOR_PWM_SPEED_MODE LEDC_HIGH_SPEED_MODE
-#define MOTOR_PWM_TIMER LEDC_TIMER_0
-#define MOTOR_PWM_CHANNEL_A LEDC_CHANNEL_0
-#define MOTOR_PWM_CHANNEL_B LEDC_CHANNEL_1
-#define MOTOR_PWM_FREQUENCY_HZ (20000)
 // Voltages used to set may duty percent value in init.
 #define MOTOR_BATTERY_VOLTAGE (9.0)
 #define MOTOR_MOTOR_VOLTAGE (6.0)
@@ -62,60 +54,13 @@ typedef struct {
   int8_t speed;
   int gpio_in1;
   int gpio_in2;
-  ledc_mode_t speed_mode;
-  ledc_channel_t channel;
+  uint8_t gpio_pwm;
 } motor_t;
 
 // Motor instances.
 #define MOTOR_INDEX_LEFT (0)
 #define MOTOR_INDEX_RIGHT (1)
 static motor_t motors[MOTOR_COUNT];
-
-void motors_init_pwms() {
-  // Prepare and set configuration of timers that will be used by LED
-  // Controller.
-  ledc_timer_config_t ledc_timer = {
-      .duty_resolution = MOTOR_DUTY_RESOLUTION,
-      .freq_hz = MOTOR_PWM_FREQUENCY_HZ,
-      .speed_mode = MOTOR_PWM_SPEED_MODE,
-      .timer_num = MOTOR_PWM_TIMER,
-      .clk_cfg = LEDC_AUTO_CLK,
-  };
-  // Set configuration of timer0 for high speed channels
-  ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
-
-  /*
-   * Prepare individual configuration
-   * for each channel of LED Controller
-   * by selecting:
-   * - controller's channel number
-   * - output duty cycle, set initially to 0
-   * - GPIO number where LED is connected to
-   * - speed mode, either high or low
-   * - timer servicing selected channel
-   *   Note: if different channels use one timer,
-   *         then frequency and bit_num of these channels
-   *         will be the same
-   */
-  ledc_channel_config_t ledc_channel[MOTOR_COUNT] = {
-      {.channel = MOTOR_PWM_CHANNEL_A,
-       .duty = 0,
-       .gpio_num = MOTOR_GPIO_PWMA,
-       .speed_mode = MOTOR_PWM_SPEED_MODE,
-       .hpoint = 0,
-       .timer_sel = MOTOR_PWM_TIMER},
-      {.channel = MOTOR_PWM_CHANNEL_B,
-       .duty = 0,
-       .gpio_num = MOTOR_GPIO_PWMB,
-       .speed_mode = MOTOR_PWM_SPEED_MODE,
-       .hpoint = 0,
-       .timer_sel = MOTOR_PWM_TIMER}};
-
-  // Set LED Controller with previously prepared configuration
-  for (int ch = 0; ch < MOTOR_COUNT; ch++) {
-    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel[ch]));
-  }
-}
 
 void motors_init_gpios() {
   // Configure the 4 GPIOs to control direction.
@@ -136,10 +81,10 @@ void motors_init_gpios() {
 
 void motor_set_duty(motor_t *motor, int8_t speed_percent) {
   // Duty is in range 0 to 255 (8 bit range) limited to max_duty_value.
-  uint32_t duty = (speed_percent * motor->max_duty_value) / 100;
+  uint8_t duty = (speed_percent * motor->max_duty_value) / 100;
   ESP_LOGI(TAG, "%s, speed%% %d, duty %d ", __FUNCTION__, speed_percent, duty);
-  ESP_ERROR_CHECK(ledc_set_duty(motor->speed_mode, motor->channel, duty));
-  ESP_ERROR_CHECK(ledc_update_duty(motor->speed_mode, motor->channel));
+  led_pwm_handle_t *handle = get_handle(motor->gpio_num);
+  led_pwm_set_duty(handle, duty);
 }
 
 /**
@@ -290,7 +235,8 @@ void motor_test_tick() {
 /********* API functions *********/
 
 void motors_init() {
-  motors_init_gpios();
+  led_pwm_gpio_init(MOTOR_GPIO_PWMA);
+  led_pwm_gpio_init(MOTOR_GPIO_PWMB);
   motors_init_pwms();
   // Calculate the maximum duty cycle for the motors as a percentage.
   // Using 8 bit duty resolution.
@@ -306,12 +252,12 @@ void motors_init() {
     if (i == MOTOR_INDEX_LEFT) {
       motor->gpio_in1 = MOTOR_GPIO_AIN1;
       motor->gpio_in2 = MOTOR_GPIO_AIN2;
-      motor->channel = MOTOR_PWM_CHANNEL_A;
+      motor->gpio_pwm = MOTOR_GPIO_PWMA;
     }
     if (i == MOTOR_INDEX_RIGHT) {
       motor->gpio_in1 = MOTOR_GPIO_BIN1;
       motor->gpio_in2 = MOTOR_GPIO_BIN2;
-      motor->channel = MOTOR_PWM_CHANNEL_B;
+      motor->gpio_pwm = MOTOR_GPIO_PWMB;
     }
   }
   ESP_LOGI(TAG, "Motors initialised");
