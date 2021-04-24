@@ -126,11 +126,11 @@ void led_pwm_gpio_init(uint8_t gpio_pin) {
   add_channel(gpio_pin);
 }
 
-led_pwm_handle_p get_handle(uint8_t gpio_num) {
+led_pwm_handle_p led_pwm_get_handle(uint8_t gpio_pin) {
   led_pwm_handle_p handle = NULL;
   for (int i = 0; i < PWM_CHANNELS; ++i) {
     if (m_handles[i].used) {
-      if (m_handles[i].ledc_channel.gpio_num == gpio_num) {
+      if (m_handles[i].ledc_channel.gpio_num == gpio_pin) {
         handle = (led_pwm_handle_p)&m_handles[i];
         break;
       }

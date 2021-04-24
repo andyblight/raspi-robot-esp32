@@ -16,6 +16,7 @@ https://github.com/espressif/esp-idf/blob/master/examples/peripherals/ledc/main/
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "esp_log.h"
+#include "raspi_robot_led_pwm.h"
 
 // Logging name.
 static const char *TAG = "raspi_robot_motors";
@@ -83,7 +84,7 @@ void motor_set_duty(motor_t *motor, int8_t speed_percent) {
   // Duty is in range 0 to 255 (8 bit range) limited to max_duty_value.
   uint8_t duty = (speed_percent * motor->max_duty_value) / 100;
   ESP_LOGI(TAG, "%s, speed%% %d, duty %d ", __FUNCTION__, speed_percent, duty);
-  led_pwm_handle_t *handle = get_handle(motor->gpio_num);
+  led_pwm_handle_p handle = led_pwm_get_handle(motor->gpio_pwm);
   led_pwm_set_duty(handle, duty);
 }
 
@@ -235,9 +236,9 @@ void motor_test_tick() {
 /********* API functions *********/
 
 void motors_init() {
+  motors_init_gpios();
   led_pwm_gpio_init(MOTOR_GPIO_PWMA);
   led_pwm_gpio_init(MOTOR_GPIO_PWMB);
-  motors_init_pwms();
   // Calculate the maximum duty cycle for the motors as a percentage.
   // Using 8 bit duty resolution.
   const int max_duty = 255;
@@ -248,7 +249,6 @@ void motors_init() {
     motor->tick_count = 0;
     motor->max_duty_value = max_duty_value;
     motor->speed = 0;
-    motor->speed_mode = MOTOR_PWM_SPEED_MODE;
     if (i == MOTOR_INDEX_LEFT) {
       motor->gpio_in1 = MOTOR_GPIO_AIN1;
       motor->gpio_in2 = MOTOR_GPIO_AIN2;

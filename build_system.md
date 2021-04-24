@@ -97,8 +97,7 @@ In shell 1:
 
 ```bash
 # Copy the mssage package into the agent workspace.
-cd ~/ws/src
-cp -r ../firmware/mcu_ws/raspi_robot_msgs/ .
+cp -r ~/ws/firmware/mcu_ws/raspi_robot_msgs/ ~/ws/src
 # Build the messages.
 cd ~/ws
 colcon build --packages-select raspi_robot_msgs

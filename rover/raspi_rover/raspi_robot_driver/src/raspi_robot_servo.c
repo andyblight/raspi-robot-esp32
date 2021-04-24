@@ -15,8 +15,11 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/periph
 
 #define MAX_SERVOS (2)
 
-static const int16_t angle_min = -180;
-static const int16_t angle_max = 180;
+// VValues for the servo
+static const int16_t k_angle_min = -90;
+static const int16_t k_angle_max = 90;
+// Number of degrees from minimum to centre.
+static const int16_t k_angle_offset = 90;
 
 // Logging name.
 static const char* TAG = "raspi_robot_servo";
@@ -29,9 +32,21 @@ void servo_init(uint8_t gpio_num) {
 }
 
 int16_t servo_set(uint8_t gpio_num, int16_t angle) {
-  uint8_t duty = 0;  // AJB TODO
+  // Clamp angle.
+  if (angle > k_angle_max) {
+    angle = k_angle_max;
+  }
+  if (angle < k_angle_min) {
+    angle = k_angle_min;
+  }
+  // Convert angle to duty value.
+  // Angle in range min to max maps on to duty 0 to 255.
+  // Convert +90 to -90 angle to 0 to 180.
+  uint16_t single_angle = angle + k_angle_offset;
+  uint8_t duty = (uint8_t)(single_angle * 256) / 180;
+    // Set duty.
   led_pwm_handle_p handle = led_pwm_get_handle(gpio_num);
   led_pwm_set_duty(handle, duty);
-  ESP_LOGI(TAG, "Servo set GPIO %d to %d degrees.", gpio_num, angle);
+  ESP_LOGI(TAG, "Servo set GPIO %d to %d degrees using %d duty.", gpio_num, angle, duty);
   return angle;
 }
