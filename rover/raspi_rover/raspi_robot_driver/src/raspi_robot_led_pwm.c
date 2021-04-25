@@ -28,7 +28,7 @@ static const char *TAG = "raspi_robot_led_pwm";
 #define DUTY_RESOLUTION (LEDC_TIMER_8_BIT)
 // Using high speed mode as it is easier to control.
 #define PWM_SPEED_MODE (LEDC_HIGH_SPEED_MODE)
-#define PWM_FREQUENCY_HZ (20000)
+#define PWM_FREQUENCY_HZ (50)
 // Timer to use.
 #define PWM_TIMER (LEDC_TIMER_0)
 // Maximum number of channels.

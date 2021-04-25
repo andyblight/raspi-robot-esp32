@@ -7,12 +7,12 @@ This is a personal project to breathe life into an old Raspberry Pi Rover projec
 The rover is controlled by an ESP32 which is fairly limited, so the ESP32 only controls the rover hardware and communicates with the base station using Wi-Fi.  The base station software runs on the PC inside a docker and is used to send commands to the rover and process data received from the rover's sensors.  This split was decided on so that the hardware and software can be developed separately.
 
 ```text
------------------------------------------------------------       ----------------------------------------  
+-----------------------------------------------------------       ----------------------------------------
 | Base station                                            |       | Rover                                |
 | -----------------    ----------------    -------------- | Wi-Fi | ---------------    ----------------- |
 | | ROS processes | <> | ROS Messages | <> | uROS Agent | <======>| | uROS Client | <> | Rover Drivers | |
 | -----------------    ----------------    -------------- |       | ---------------    ----------------- |
------------------------------------------------------------       ---------------------------------------- 
+-----------------------------------------------------------       ----------------------------------------
 ```
 
 The project software structure shown above is roughly reflected in the directory structure:
@@ -20,7 +20,7 @@ The project software structure shown above is roughly reflected in the directory
 * docker - A docker based on Ubuntu server 20.04LTS that has:
   * The micro-ROS agent.
   * The micro-ROS client. NOTE: The client has to be build in the same workspace as the agent.
-  * Basic display X window capabilities for tools such as RQt. 
+  * Basic display X window capabilities for tools such as RQt.
   * Other ROS2 packages needed to control the robot.
 * raspi_robot_messages - messages used to communicate between the rover and the base station.
 * rover - software for the rover.
@@ -64,16 +64,28 @@ In addition, the rover will publish some diagnostic messages for debugging purpo
 * Connect the ESP32 to agent docker and send messages both ways.  DONE.
   * Two identical dockers, base stations and rover client.  Can I use one?
     YES. Only one workspace needed.
-    Remove base station docker. DONE. 
+    Remove base station docker. DONE.
     Move client docker and rename. DONE.
   30mins.
-* 
+* Report range. #9
+  30 minutes.
+*
 
-Total hours: 56
+Total hours: 61
 
 ## To do
 
-* Implement diagnositic message.  #4
+* Implement each message/service and test.
+  * Sonar position #8
+    * Add driver for servos. Must support multiple instances.
+    * Implement service to set position and report set value.
+    4h30 so far.
+* Decide on use of standard messages for rover.
+  * `odom` to publish position change based on encoder data. #6
+    Distance = revolutions * circumference of wheel.
+* Fix RQt.  Missing packages? #7
+* Implement diagnositic message.  #4.
+  This is a pain to make work so have given up on it for now.
   * Add array containing:
     * Robot status.
       * Raw encoder values.
@@ -82,19 +94,14 @@ Total hours: 56
       * SSID.
       * Signal strength.
       * Connected.
-* Implement each message/service and test.
-  * Sonar #8
-    * Add driver for servos. Must support multiple instances.
-    * Implement service to set position and report distance. 
-* Decide on use of standard messaegs for rover.
-  * `cmd_vel` to move. #5
-    Will need PID controller as the motors have different characteristics.
-  * `odom` to publish position change based on encoder data. #6
-    Distance = revolutions * circumference of wheel.
-* Fix RQt.  Missing packages? #7
 * Make the rover do something interesting!
+  * Drive rover using joy stick controller. #10
+    * Implement `cmd_vel` to move. #5
+
+      Will need PID controller as the motors have different characteristics.
+  * Generate map of route taken.
 
 
-* Test Arduino style build for ESP32.  
+* Test Arduino style build for ESP32.
 <https://discourse.ros.org/t/micro-ros-porting-to-esp32/16101/13>
 <https://github.com/micro-ROS/micro_ros_espidf_component/issues/9>

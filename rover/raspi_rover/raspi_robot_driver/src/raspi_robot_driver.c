@@ -105,5 +105,5 @@ int16_t raspi_robot_get_hall_effect() {
 
 void raspi_robot_servo_set(int16_t *x, int16_t *y) {
   *x = servo_set(SERVO_X, *x);
-  *y = servo_set(SERVO_X, *y);
+  *y = servo_set(SERVO_Y, *y);
 }
