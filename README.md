@@ -97,8 +97,8 @@ Total hours: 61
 * Make the rover do something interesting!
   * Drive rover using joy stick controller. #10
     * Implement `cmd_vel` to move. #5
-
-      Will need PID controller as the motors have different characteristics.
+      * This problem means that the motors subscriber has to be disabled. `[ERROR] [0000000002.196235000] [rclc]: [rclc_subscription_init_default] Error in rcl_subscription_init: Not available memory node, at /home/build/ws/firmware/mcu_ws/uros/rmw_microxrcedds/rmw_microxrcedds_c/src/rmw_subscription.c:110, at /home/build/ws/firmware/mcu_ws/uros/rcl/rcl/src/rcl/subscription.c:175`
+    * Will need PID controller as the motors have different characteristics.
   * Generate map of route taken.
 
 
