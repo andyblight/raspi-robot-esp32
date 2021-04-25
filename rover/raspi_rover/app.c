@@ -11,7 +11,8 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "geometry_msgs/msg/twist_stamped.h"
+//#include "geometry_msgs/msg/twist_stamped.h"
+#include "geometry_msgs/msg/twist.h"
 #include "raspi_robot_driver.h"
 #include "raspi_robot_msgs/msg/leds.h"
 #include "raspi_robot_msgs/msg/motors.h"
@@ -95,10 +96,10 @@ static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
 }
 
 static void subscription_callback_cmd_vel(const void *msg_in) {
-  const geometry_msgs__msg__TwistStamped *msg =
-      (const geometry_msgs__msg__TwistStamped *)msg_in;
-  float forward = msg->twist.linear.x;
-  float rotate = msg->twist.angular.z;
+  const geometry_msgs__msg__Twist *msg =
+      (const geometry_msgs__msg__Twist *)msg_in;
+  float forward = msg->linear.x;
+  float rotate = msg->angular.z;
   ESP_LOGI(TAG, "Received: forward %f, rotate %f", forward, rotate);
 }
 
@@ -163,7 +164,7 @@ void appMain(void *arg) {
   ESP_LOGI(TAG, "Creating subscribers");
   RCCHECK(rclc_subscription_init_default(
       &subscriber_cmd_vel, &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, TwistStamped),
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
       "raspi_robot_cmd_vel"));
 
   RCCHECK(rclc_subscription_init_default(
@@ -200,7 +201,7 @@ void appMain(void *arg) {
   RCCHECK(rclc_executor_add_timer(&executor, &timer));
 
   ESP_LOGI(TAG, "Adding subs");
-  geometry_msgs__msg__TwistStamped twist_msg;
+  geometry_msgs__msg__Twist twist_msg;
   RCCHECK(rclc_executor_add_subscription(
       &executor, &subscriber_cmd_vel, &twist_msg,
       &subscription_callback_cmd_vel, ON_NEW_DATA));
