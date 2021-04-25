@@ -90,6 +90,8 @@ void init_driver() {
           break;
       }
       m_handles[i].ledc_channel.channel = channel;
+      // ESP_LOGI(TAG, "%s, index %d, handle %p", __FUNCTION__, i, &m_handles[i]);
+      initialised = true;
     }
   }
 }
@@ -97,7 +99,9 @@ void init_driver() {
 void add_channel(uint8_t gpio_pin) {
   led_pwm_handle_t *handle = NULL;
   for (int i = 0; i < PWM_CHANNELS; ++i) {
-    if (!m_handles[i].used) {
+    // ESP_LOGI(TAG, "%s, pin %d, index %d, used %d", __FUNCTION__, gpio_pin, i,
+    //          m_handles[i].used);
+    if (m_handles[i].used == false) {
       // Allocate handle.
       m_handles[i].used = true;
       handle = &m_handles[i];
@@ -111,6 +115,9 @@ void add_channel(uint8_t gpio_pin) {
       ledc_channel->timer_sel = PWM_TIMER;
       ESP_ERROR_CHECK(ledc_channel_config(ledc_channel));
       // Found and allocated handle so exit loop early.
+      // ESP_LOGI(TAG, "%s, handle %p, handle gpio %d, channel %d", __FUNCTION__,
+      //          handle, handle->ledc_channel.gpio_num,
+      //          handle->ledc_channel.channel);
       break;
     }
   }
@@ -127,15 +134,16 @@ void led_pwm_gpio_init(uint8_t gpio_pin) {
 }
 
 led_pwm_handle_p led_pwm_get_handle(uint8_t gpio_pin) {
+  // ESP_LOGI(TAG, "%s, pin %d", __FUNCTION__, gpio_pin);
   led_pwm_handle_p handle = NULL;
   for (int i = 0; i < PWM_CHANNELS; ++i) {
-    if (m_handles[i].used) {
-      if (m_handles[i].ledc_channel.gpio_num == gpio_pin) {
-        handle = (led_pwm_handle_p)&m_handles[i];
-        break;
-      }
+    // ESP_LOGI(TAG, "%s, used %d", __FUNCTION__, m_handles[i].used);
+    if (m_handles[i].ledc_channel.gpio_num == gpio_pin) {
+      handle = (led_pwm_handle_p)&m_handles[i];
+      break;
     }
   }
+  // ESP_LOGI(TAG, "%s, handle %p", __FUNCTION__, handle);
   return handle;
 }
 

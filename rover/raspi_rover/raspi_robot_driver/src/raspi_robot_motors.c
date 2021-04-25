@@ -124,8 +124,8 @@ void motor_set_mode(motor_t *motor, motor_mode_t new_mode) {
  * @param ticks Duration in ticks.
  */
 void motor_drive(motor_t *motor, int8_t speed, uint32_t ticks) {
-  ESP_LOGI(TAG, "%s called: motor %d, speed %d, ticks %d ", __FUNCTION__,
-           motor->gpio_in1, speed, ticks);
+  // ESP_LOGI(TAG, "%s called: motor %d, speed %d, ticks %d ", __FUNCTION__,
+  //          motor->gpio_in1, speed, ticks);
   // Set the PWM duty cycle, limiting to MOTOR_max_duty_value.
   uint32_t speed_percent = abs(speed);
   if (speed_percent > 100) {
@@ -268,10 +268,10 @@ void motors_tick() {
     motor_t *motor = &(motors[i]);
     if (motor->tick_count > 0) {
       --motor->tick_count;
-      ESP_LOGI(TAG, "%s, motor %d, speed %d, tick_count %d", __FUNCTION__,
-               motor->gpio_in1, motor->speed, motor->tick_count);
+      // ESP_LOGI(TAG, "%s, motor %d, speed %d, tick_count %d", __FUNCTION__,
+      //          motor->gpio_in1, motor->speed, motor->tick_count);
       if (motor->speed != 0 && motor->tick_count <= 0) {
-        ESP_LOGI(TAG, "%s, stopping motor %d", __FUNCTION__, motor->gpio_in1);
+        ESP_LOGI(TAG, "%s, stopping motor %d", __FUNCTION__, motor->gpio_pwm);
         motor_set_mode(motor, MOTOR_MODE_STOP);
         motor_set_duty(motor, 0);
         motor->speed = 0;
@@ -285,7 +285,8 @@ void motors_tick() {
 }
 
 void motors_drive(int8_t speed_left, int8_t speed_right, uint16_t ticks) {
-  ESP_LOGI(TAG, "%s, %d, %d, %d", __FUNCTION__, speed_left, speed_right, ticks);
+  ESP_LOGI(TAG, "%s, left %d, right %d, ticks %d", __FUNCTION__, speed_left,
+           speed_right, ticks);
   motor_drive(&(motors[MOTOR_INDEX_LEFT]), speed_left, ticks);
   motor_drive(&(motors[MOTOR_INDEX_RIGHT]), speed_right, ticks);
 }

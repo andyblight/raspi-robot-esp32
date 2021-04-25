@@ -48,6 +48,14 @@
 // #define EXECUTOR_HANDLE_COUNT (5)
 #define EXECUTOR_HANDLE_COUNT (4)
 
+// Motor constants.
+#define MAXIMUM_SPEED_M_S (0.50)
+#define MINIMUM_SPEED_M_S (0.10)
+// The motors do not move the robot when less than this value.
+#define MINIMUM_MOTOR_PERCENT (30)
+// Ticks is preset to 1 second, 10 ticks.
+#define MOTOR_TICKS (10)
+
 rcl_publisher_t publisher_battery_state;
 rcl_publisher_t publisher_range;
 rcl_subscription_t subscriber_cmd_vel;
@@ -102,6 +110,35 @@ static void subscription_callback_cmd_vel(const void *msg_in) {
   float forward = msg->linear.x;
   float rotate = msg->angular.z;
   ESP_LOGI(TAG, "Received: forward %f, rotate %f", forward, rotate);
+  // Convert float to percent within motor limits.
+  int8_t left_percent = 0;
+  int8_t right_percent = 0;
+  // Do most calculations using absolute velocity.
+  if (forward < 0.0) {
+    forward = -forward;
+  }
+  // Clamp the maximum speed.
+  if (forward > MAXIMUM_SPEED_M_S) {
+    forward = MAXIMUM_SPEED_M_S;
+  }
+  // Convert the forward value to a motor percent.
+  if (forward > MINIMUM_SPEED_M_S) {
+    int8_t forward_percent = (int8_t)((float)(forward / MAXIMUM_SPEED_M_S) * 100);
+    // Clamp minimum percent.
+    if (forward_percent < MINIMUM_MOTOR_PERCENT) {
+      forward_percent = MINIMUM_MOTOR_PERCENT;
+    }
+    // Add sign back in and convert to left and right values.
+    // To go forward, one motor is +ve and the other is -ve.
+    if (forward_percent > 0) {
+      left_percent = forward_percent;
+      right_percent = -forward_percent;
+    } else {
+      left_percent = -forward_percent;
+      right_percent = forward_percent;
+    }
+  } // Any value less than minimum speed is ignored.
+  raspi_robot_motors_drive(left_percent, right_percent, MOTOR_TICKS);
 }
 
 static void subscription_callback_leds(const void *msg_in) {
