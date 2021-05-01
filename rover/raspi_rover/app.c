@@ -45,8 +45,8 @@
 
 // Number of executor handles: one timer, three subscribers, one service.
 // Publishers don't count as they are driven by the timer.
-// #define EXECUTOR_HANDLE_COUNT (5)
-#define EXECUTOR_HANDLE_COUNT (4)
+#define EXECUTOR_HANDLE_COUNT (6)
+// #define EXECUTOR_HANDLE_COUNT (4)
 
 // Motor constants.
 #define MAXIMUM_SPEED_M_S (0.50)
@@ -60,7 +60,7 @@ rcl_publisher_t publisher_battery_state;
 rcl_publisher_t publisher_range;
 rcl_subscription_t subscriber_cmd_vel;
 rcl_subscription_t subscriber_leds;
-// rcl_subscription_t subscriber_motors;
+rcl_subscription_t subscriber_motors;
 rcl_service_t service_sonar_position;
 
 // Logging name.
@@ -148,15 +148,15 @@ static void subscription_callback_leds(const void *msg_in) {
   raspi_robot_set_led(msg->led, msg->flash_rate);
 }
 
-// static void subscription_callback_motors(const void *msg_in) {
-//   const raspi_robot_msgs__msg__Motors *msg =
-//       (const raspi_robot_msgs__msg__Motors *)msg_in;
-//   ESP_LOGI(TAG, "Received: %d, %d, %d", msg->left_percent, msg->right_percent,
-//            msg->duration_ms);
-//   // Call motor functions.
-//   uint16_t ticks = msg->duration_ms / MS_PER_TICK;
-//   raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
-// }
+static void subscription_callback_motors(const void *msg_in) {
+  const raspi_robot_msgs__msg__Motors *msg =
+      (const raspi_robot_msgs__msg__Motors *)msg_in;
+  ESP_LOGI(TAG, "Received: %d, %d, %d", msg->left_percent, msg->right_percent,
+           msg->duration_ms);
+  // Call motor functions.
+  uint16_t ticks = msg->duration_ms / MS_PER_TICK;
+  raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
+}
 
 void service_sonar_position_callback(const void *req, void *res) {
   raspi_robot_msgs__srv__SonarPosition_Request *request =
@@ -210,10 +210,10 @@ void appMain(void *arg) {
       ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Leds),
       "raspi_robot_leds"));
 
-  // RCCHECK(rclc_subscription_init_default(
-  //     &subscriber_motors, &node,
-  //     ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Motors),
-  //     "raspi_robot_motors"));
+  RCCHECK(rclc_subscription_init_default(
+      &subscriber_motors, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Motors),
+      "raspi_robot_motors"));
 
   // Create services.
   ESP_LOGI(TAG, "Creating services");
@@ -250,11 +250,11 @@ void appMain(void *arg) {
                                          &subscription_callback_leds,
                                          ON_NEW_DATA));
 
-  // ESP_LOGI(TAG, "Adding motor subs");
-  // raspi_robot_msgs__msg__Motors motors_msg;
-  // RCCHECK(rclc_executor_add_subscription(
-  //     &executor, &subscriber_motors, &motors_msg, &subscription_callback_motors,
-  //     ON_NEW_DATA));
+  ESP_LOGI(TAG, "Adding motor subs");
+  raspi_robot_msgs__msg__Motors motors_msg;
+  RCCHECK(rclc_executor_add_subscription(
+      &executor, &subscriber_motors, &motors_msg, &subscription_callback_motors,
+      ON_NEW_DATA));
 
   ESP_LOGI(TAG, "Adding services");
   raspi_robot_msgs__srv__SonarPosition_Request request;
@@ -278,7 +278,7 @@ void appMain(void *arg) {
   ESP_LOGI(TAG, "Free resources");
   RCCHECK(rcl_subscription_fini(&subscriber_cmd_vel, &node));
   RCCHECK(rcl_subscription_fini(&subscriber_leds, &node));
-  // RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
+  RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
   RCCHECK(rcl_publisher_fini(&publisher_battery_state, &node))
   RCCHECK(rcl_publisher_fini(&publisher_range, &node))
   RCCHECK(rcl_service_fini(&service_sonar_position, &node));

@@ -49,6 +49,7 @@ void init_driver() {
   // Controller.
   static bool initialised = false;
   if (!initialised) {
+    // Set configuration of timer0 for high speed channels
     static ledc_timer_config_t ledc_timer = {
         .duty_resolution = DUTY_RESOLUTION,
         .freq_hz = PWM_FREQUENCY_HZ,
@@ -56,8 +57,8 @@ void init_driver() {
         .timer_num = PWM_TIMER,
         .clk_cfg = LEDC_AUTO_CLK,
     };
-    // Set configuration of timer0 for high speed channels
     ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+
     // Initialise the handles.
     for (int i = 0; i < PWM_CHANNELS; ++i) {
       m_handles[i].used = false;
@@ -90,7 +91,8 @@ void init_driver() {
           break;
       }
       m_handles[i].ledc_channel.channel = channel;
-      // ESP_LOGI(TAG, "%s, index %d, handle %p", __FUNCTION__, i, &m_handles[i]);
+      // ESP_LOGI(TAG, "%s, index %d, handle %p", __FUNCTION__, i,
+      // &m_handles[i]);
       initialised = true;
     }
   }
@@ -105,6 +107,7 @@ void add_channel(uint8_t gpio_pin) {
       // Allocate handle.
       m_handles[i].used = true;
       handle = &m_handles[i];
+
       // Configure channel.
       ledc_channel_config_t *ledc_channel = &(handle->ledc_channel);
       // 'ledc_channel->channel' is preset.
@@ -114,10 +117,11 @@ void add_channel(uint8_t gpio_pin) {
       ledc_channel->hpoint = 0;
       ledc_channel->timer_sel = PWM_TIMER;
       ESP_ERROR_CHECK(ledc_channel_config(ledc_channel));
+
       // Found and allocated handle so exit loop early.
-      // ESP_LOGI(TAG, "%s, handle %p, handle gpio %d, channel %d", __FUNCTION__,
-      //          handle, handle->ledc_channel.gpio_num,
-      //          handle->ledc_channel.channel);
+      ESP_LOGI(TAG, "%s, handle %p, handle gpio %d, channel %d", __FUNCTION__,
+               handle, handle->ledc_channel.gpio_num,
+               handle->ledc_channel.channel);
       break;
     }
   }

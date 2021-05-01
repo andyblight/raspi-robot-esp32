@@ -26,13 +26,18 @@ source ./install/local_setup.bash
 # Run micro-ROS tools to setup application for ESP32.
 ros2 run micro_ros_setup create_firmware_ws.sh freertos esp32
 
-# Copy rover code into workspace.
-cp -r /home/build/code/rover/raspi_rover/ /home/build/ws/firmware/freertos_apps/apps
-# Packages go in a different directory.
-cp -r ~/code/raspi_robot_msgs/ /home/build/ws/firmware/mcu_ws
+# Copy and build custom messages
+rm -rf ~/ws/firmware/mcu_ws/raspi_robot_msgs/
+cp -r ~/code/raspi-robot-esp32/raspi_robot_msgs/ ~/ws/firmware/mcu_ws/
+cd ~/ws
+colcon build --packages-select raspi_robot_msgs
+
 # Apply patch to CMakeLists.txt file so it picks up the app.cmake file.
 cd ~/ws/firmware/freertos_apps
 git apply ~/code/rover/docker-client/CMakeLists.patch
+
+# Copy rover code into workspace.
+cp -r /home/build/code/raspi-robot-esp32/rover/raspi_rover/ /home/build/ws/firmware/freertos_apps/apps
 
 # Build the new code.
 ros2 run micro_ros_setup configure_firmware.sh raspi_rover -t udp -i 192.168.1.1 -p 8888

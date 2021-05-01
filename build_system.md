@@ -113,8 +113,11 @@ In shell 2, test the custom messages and services:
 ```bash
 cd ~/ws
 . install/local_setup.bash
+
 ros2 topic pub /raspi_robot_leds raspi_robot_msgs/msg/Leds "{led: 1, flash_rate: 4}"
+
 ros2 topic pub /raspi_robot_motors raspi_robot_msgs/msg/Motors "{left_percent: 30, right_percent: 30, duration_ms: 1000}"
+
 ros2 service call /raspi_robot_sonar_position raspi_robot_msgs/srv/SonarPosition "{x: 10, y: 20}"
 
 ros2 topic pub /raspi_robot_cmd_vel geometry_msgs/msg/Twist "{linear: {x: 1.0}, angular: {z: -1.0}}"
@@ -150,3 +153,9 @@ colcon build --packages-select raspi_robot_msgs
 . install/local_setup.bash
 ros2 run micro_ros_setup build_agent.sh
 ```
+
+## Updating app-colcon.meta
+
+When adding publishers etc. you need to update the `app-colcon.meta` file to tell the build system that number of publishers etc.  This change takes effect when the command `ros2 run micro_ros_setup build_firmware.sh` is run.
+
+Not having the correct numbers in `app-colcon.meta` and the value of `EXECUTOR_HANDLE_COUNT` causes a failure during intialisation.  Check the numbers carefully.
