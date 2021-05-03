@@ -11,8 +11,8 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-//#include "geometry_msgs/msg/twist_stamped.h"
 #include "geometry_msgs/msg/twist.h"
+#include "nav_msgs/msg/odometry.h"
 #include "raspi_robot_driver.h"
 #include "raspi_robot_msgs/msg/leds.h"
 #include "raspi_robot_msgs/msg/motors.h"
@@ -57,6 +57,7 @@
 #define MOTOR_TICKS (10)
 
 rcl_publisher_t publisher_battery_state;
+rcl_publisher_t publisher_odometry;
 rcl_publisher_t publisher_range;
 rcl_subscription_t subscriber_cmd_vel;
 rcl_subscription_t subscriber_leds;
@@ -68,12 +69,14 @@ static const char *TAG = "raspi_rover";
 // Standard topic/service names.
 static const char *k_battery_state = "battery_state";
 static const char *k_cmd_vel = "cmd_vel";
+static const char *k_odometry = "odom";
 static const char *k_range = "range";
 // Custom topic/service names.
 static const char *k_robot_leds = "raspi_robot/leds";
 static const char *k_robot_motors = "raspi_robot/motors";
 static const char *k_robot_sonar_position = "raspi_robot/sonar_position";
 // Messages to publish.
+static nav_msgs__msg__Odometry *odometry_msg = NULL;
 static sensor_msgs__msg__BatteryState *battery_state_msg = NULL;
 static sensor_msgs__msg__Range *range_msg = NULL;
 
@@ -87,6 +90,15 @@ static void publish_battery_state(void) {
   battery_state_msg->present = true;
   ESP_LOGI(TAG, "Sending msg: %f", battery_state_msg->voltage);
   rcl_ret_t rc = rcl_publish(&publisher_battery_state, battery_state_msg, NULL);
+  RCLC_UNUSED(rc);
+}
+
+static void publish_odometry(void) {
+  // Fill message.
+  sprintf(odometry_msg->child_frame_id.data, "Unknown");
+  // Leave the rest blank for now.
+  ESP_LOGI(TAG, "Sending odometry: %s", odometry_msg->child_frame_id.data);
+  rcl_ret_t rc = rcl_publish(&publisher_odometry, odometry_msg, NULL);
   RCLC_UNUSED(rc);
 }
 
@@ -108,6 +120,7 @@ static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
   ESP_LOGI(TAG, "Timer called.");
   if (timer != NULL) {
     publish_battery_state();
+    publish_odometry();
     publish_range();
   }
 }
@@ -186,6 +199,7 @@ void appMain(void *arg) {
 
   // Initialise messages.
   battery_state_msg = sensor_msgs__msg__BatteryState__create();
+  odometry_msg = nav_msgs__msg__Odometry__create();
   range_msg = sensor_msgs__msg__Range__create();
 
   // Create init_options
@@ -202,6 +216,10 @@ void appMain(void *arg) {
       &publisher_battery_state, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
       k_battery_state));
+
+  RCCHECK(rclc_publisher_init_default(
+      &publisher_odometry, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry), k_odometry));
 
   RCCHECK(rclc_publisher_init_default(
       &publisher_range, &node,
@@ -287,9 +305,11 @@ void appMain(void *arg) {
   RCCHECK(rcl_subscription_fini(&subscriber_leds, &node));
   RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
   RCCHECK(rcl_publisher_fini(&publisher_battery_state, &node))
+  RCCHECK(rcl_publisher_fini(&publisher_odometry, &node))
   RCCHECK(rcl_publisher_fini(&publisher_range, &node))
   RCCHECK(rcl_service_fini(&service_sonar_position, &node));
   RCCHECK(rcl_node_fini(&node))
+  nav_msgs__msg__Odometry__destroy(odometry_msg);
   sensor_msgs__msg__BatteryState__destroy(battery_state_msg);
   sensor_msgs__msg__Range__destroy(range_msg);
 

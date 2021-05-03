@@ -69,9 +69,17 @@ In addition, the rover will publish some diagnostic messages for debugging purpo
   30mins.
 * Report range. #9
   30 minutes.
-*
 
 Total hours: 61
+
+## WIP
+
+* Implement `odom` publisher.  #6
+  * Implement `odom` publisher pubishing fake data.
+  * Implement encoder driver.
+  * `odom` to publish position change based on encoder data.
+    Distance = revolutions * circumference of wheel.
+    Needs header file or similar to hold robot data.
 
 ## To do
 
@@ -79,10 +87,10 @@ Total hours: 61
   * Sonar position #8
     * Add driver for servos. Must support multiple instances.
     * Implement service to set position and report set value.
-    4h30 so far.
-* Decide on use of standard messages for rover.
-  * `odom` to publish position change based on encoder data. #6
-    Distance = revolutions * circumference of wheel.
+    Having problems with servo hardware.
+    * Need a servo tester to prove voltages etc. will work for the ESP32.
+    7h30 so far.
+
 * Fix RQt.  Missing packages? #7
 * Implement diagnositic message.  #4.
   This is a pain to make work so have given up on it for now.

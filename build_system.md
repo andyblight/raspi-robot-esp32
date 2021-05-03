@@ -159,3 +159,52 @@ ros2 run micro_ros_setup build_agent.sh
 When adding publishers etc. you need to update the `app-colcon.meta` file to tell the build system that number of publishers etc.  This change takes effect when the command `ros2 run micro_ros_setup build_firmware.sh` is run.
 
 Not having the correct numbers in `app-colcon.meta` and the value of `EXECUTOR_HANDLE_COUNT` causes a failure during intialisation.  Check the numbers carefully.
+
+## Adding a common interface message
+
+This is pretty straightforward but there are a quirks that you need to bear in mind when using micro-ROS.
+
+### Finding the header files
+
+It is useful to know where to find the header files for the common interface messages so you can see what messages are available.  The key directory to look in is `./firmware/mcu_ws/install/include/` which is only present after a successful build.  It is also worth taking a look at the numerous files that are used for a single message to get an idea of how the messages are intended to be used.
+
+### Diagnostic message
+
+micro-ROS uses a special version of the `common_interfaces/diagnostic_msgs` as variable length fields don't work with micro-ROS.  Instead use `micro_ros_diagnostic_msgs`.
+
+### Message functions
+
+Each message needs to be created and destroyed.  There are several other functions for each message, but the only functions I have needed are create and destroy functions.
+
+The example below shows how the `range` message might be used.
+
+```c
+...
+#include "sensor_msgs/msg/range.h"
+
+static sensor_msgs__msg__Range *range_msg = NULL;
+
+static void publish_range(void) {
+  // Fill message.
+  range_msg->radiation_type = 0;   // Ultrasound.
+  ...
+  rcl_ret_t rc = rcl_publish(&publisher_range, range_msg, NULL);
+  RCLC_UNUSED(rc);
+}
+
+appMain (void *arg) {
+...
+  // Create messages
+  range_msg = sensor_msgs__msg__Range__create();
+...
+  while (1) {
+    rclc_executor_spin_some(&executor, 100);
+    usleep(US_PER_TICK);
+  }
+  // Free resources
+  sensor_msgs__msg__Range__destroy(range_msg);
+...
+}
+
+
+```
