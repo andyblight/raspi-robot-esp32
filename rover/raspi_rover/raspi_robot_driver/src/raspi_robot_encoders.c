@@ -30,6 +30,8 @@ static encoder_t encoders[MAX_ENCODERS] = {0};
 static int encoder_count = 0;
 
 // Interrupt handler to update the pulse counts.
+// FIXME This could be simplified if the GPIOs were fixed and two ISRs were
+// used, one for each GPIO pin.  This would remove the need for the loop.
 static void IRAM_ATTR gpio_isr_handler(void* arg) {
   uint32_t gpio_num = (uint32_t)arg;
   for (int i = 0; i < MAX_ENCODERS; ++i) {
@@ -53,8 +55,8 @@ void encoders_init(uint8_t gpio_num) {
                              .pull_down_en = 0,
                              // Enable pull-up mode
                              .pull_up_en = 1,
-                             // Interrupt on any edge.
-                             .intr_type = GPIO_INTR_ANYEDGE};
+                             // Interrupt on rising edge.
+                             .intr_type = GPIO_INTR_POSEDGE};
     ESP_ERROR_CHECK(gpio_config(&io_conf));
     // Set up the ISR handlers.
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);

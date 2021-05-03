@@ -75,8 +75,13 @@ Total hours: 61
 ## WIP
 
 * Implement `odom` publisher.  #6
-  * Implement `odom` publisher pubishing fake data.
+  * Implement `odom` publisher publishing fake data.
+    1hr.
   * Implement encoder driver.
+    Simple driver done.
+    1hr
+    The driver can generate spurious counts.  Added bug.
+
   * `odom` to publish position change based on encoder data.
     Distance = revolutions * circumference of wheel.
     Needs header file or similar to hold robot data.
