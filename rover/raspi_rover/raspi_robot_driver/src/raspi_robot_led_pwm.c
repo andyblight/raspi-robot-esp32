@@ -155,7 +155,8 @@ void led_pwm_set_duty(led_pwm_handle_p handle, uint8_t duty) {
   if (handle) {
     led_pwm_handle_t *pwm_handle = (led_pwm_handle_t *)handle;
     ledc_channel_config_t *ledc_channel = &(pwm_handle->ledc_channel);
-    ESP_LOGI(TAG, "%s, duty %d ", __FUNCTION__, duty);
+    ESP_LOGI(TAG, "%s, gpio %d, duty %d ", __FUNCTION__, ledc_channel->gpio_num,
+             duty);
     ESP_ERROR_CHECK(
         ledc_set_duty(ledc_channel->speed_mode, ledc_channel->channel, duty));
     ESP_ERROR_CHECK(

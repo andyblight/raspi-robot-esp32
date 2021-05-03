@@ -65,25 +65,19 @@ rcl_service_t service_sonar_position;
 
 // Logging name.
 static const char *TAG = "raspi_rover";
+// Standard topic/service names.
+static const char *k_battery_state = "battery_state";
+static const char *k_cmd_vel = "cmd_vel";
+static const char *k_range = "range";
+// Custom topic/service names.
+static const char *k_robot_leds = "raspi_robot/leds";
+static const char *k_robot_motors = "raspi_robot/motors";
+static const char *k_robot_sonar_position = "raspi_robot/sonar_position";
 // Messages to publish.
 static sensor_msgs__msg__BatteryState *battery_state_msg = NULL;
 static sensor_msgs__msg__Range *range_msg = NULL;
 
 static void publish_battery_state(void) {
-  status_t status;
-  raspi_robot_get_status(&status);
-  // Fill message.
-  range_msg->radiation_type = 0;   // Ultrasound.
-  range_msg->field_of_view = 0.5;  // radians (about 30 degrees).
-  range_msg->min_range = 0.05;     // metres
-  range_msg->min_range = 4.0;      // metres
-  range_msg->range = (float)(status.sonar_mm) / 1000;  // metres
-  ESP_LOGI(TAG, "Sending msg: %f", range_msg->range);
-  rcl_ret_t rc = rcl_publish(&publisher_range, range_msg, NULL);
-  RCLC_UNUSED(rc);
-}
-
-static void publish_range(void) {
   // Fill message.
   battery_state_msg->voltage = raspi_robot_get_battery_voltage();
   // Convert from milli-Volts to Volts.
@@ -93,6 +87,20 @@ static void publish_range(void) {
   battery_state_msg->present = true;
   ESP_LOGI(TAG, "Sending msg: %f", battery_state_msg->voltage);
   rcl_ret_t rc = rcl_publish(&publisher_battery_state, battery_state_msg, NULL);
+  RCLC_UNUSED(rc);
+}
+
+static void publish_range(void) {
+  status_t status;
+  raspi_robot_get_status(&status);
+  // Fill message.
+  range_msg->radiation_type = 0;   // Ultrasound.
+  range_msg->field_of_view = 0.5;  // radians (+/- 15 degrees ish).
+  range_msg->min_range = 0.05;     // metres
+  range_msg->min_range = 4.0;      // metres
+  range_msg->range = (float)(status.sonar_mm) / 1000;  // metres
+  ESP_LOGI(TAG, "Sending msg: %f", range_msg->range);
+  rcl_ret_t rc = rcl_publish(&publisher_range, range_msg, NULL);
   RCLC_UNUSED(rc);
 }
 
@@ -123,7 +131,8 @@ static void subscription_callback_cmd_vel(const void *msg_in) {
   }
   // Convert the forward value to a motor percent.
   if (forward > MINIMUM_SPEED_M_S) {
-    int8_t forward_percent = (int8_t)((float)(forward / MAXIMUM_SPEED_M_S) * 100);
+    int8_t forward_percent =
+        (int8_t)((float)(forward / MAXIMUM_SPEED_M_S) * 100);
     // Clamp minimum percent.
     if (forward_percent < MINIMUM_MOTOR_PERCENT) {
       forward_percent = MINIMUM_MOTOR_PERCENT;
@@ -137,7 +146,7 @@ static void subscription_callback_cmd_vel(const void *msg_in) {
       left_percent = -forward_percent;
       right_percent = forward_percent;
     }
-  } // Any value less than minimum speed is ignored.
+  }  // Any value less than minimum speed is ignored.
   raspi_robot_motors_drive(left_percent, right_percent, MOTOR_TICKS);
 }
 
@@ -192,35 +201,33 @@ void appMain(void *arg) {
   RCCHECK(rclc_publisher_init_default(
       &publisher_battery_state, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
-      "battery_state"));
+      k_battery_state));
 
   RCCHECK(rclc_publisher_init_default(
       &publisher_range, &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Range), "range"));
+      ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Range), k_range));
 
   // Create subscribers.
   ESP_LOGI(TAG, "Creating subscribers");
   RCCHECK(rclc_subscription_init_default(
       &subscriber_cmd_vel, &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-      "raspi_robot_cmd_vel"));
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), k_cmd_vel));
 
   RCCHECK(rclc_subscription_init_default(
       &subscriber_leds, &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Leds),
-      "raspi_robot_leds"));
+      ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Leds), k_robot_leds));
 
   RCCHECK(rclc_subscription_init_default(
       &subscriber_motors, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Motors),
-      "raspi_robot_motors"));
+      k_robot_motors));
 
   // Create services.
   ESP_LOGI(TAG, "Creating services");
   RCCHECK(rclc_service_init_default(
       &service_sonar_position, &node,
       ROSIDL_GET_SRV_TYPE_SUPPORT(raspi_robot_msgs, srv, SonarPosition),
-      "raspi_robot_sonar_position"));
+      k_robot_sonar_position));
 
   // Create timer.
   ESP_LOGI(TAG, "Creating timers");
