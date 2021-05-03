@@ -7,7 +7,7 @@
 /**
  * @brief Initialise the given switch.
  *
- * @param gpio_num The GPIO to intitialise.
+ * @param gpio_num The GPIO to initialise.
  */
 void switches_init(uint8_t gpio_num);
 

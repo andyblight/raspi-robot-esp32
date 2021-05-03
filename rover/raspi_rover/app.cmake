@@ -10,6 +10,7 @@ set(UROS_APP_SRCS
   ${UROS_APP_FOLDER}/app.c
   ${UROS_APP_FOLDER}/raspi_robot_driver/src/raspi_robot_adc.c
   ${UROS_APP_FOLDER}/raspi_robot_driver/src/raspi_robot_driver.c
+  ${UROS_APP_FOLDER}/raspi_robot_driver/src/raspi_robot_encoders.c
   ${UROS_APP_FOLDER}/raspi_robot_driver/src/raspi_robot_leds.c
   ${UROS_APP_FOLDER}/raspi_robot_driver/src/raspi_robot_led_pwm.c
   ${UROS_APP_FOLDER}/raspi_robot_driver/src/raspi_robot_motors.c

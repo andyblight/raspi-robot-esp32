@@ -16,6 +16,7 @@ https://github.com/espressif/esp-idf/blob/master/examples/peripherals/ledc/main/
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "raspi_robot_adc.h"
+#include "raspi_robot_encoders.h"
 #include "raspi_robot_leds.h"
 #include "raspi_robot_motors.h"
 #include "raspi_robot_servo.h"
@@ -59,12 +60,14 @@ https://github.com/espressif/esp-idf/blob/master/examples/peripherals/ledc/main/
 void raspi_robot_init(void) {
   adc_init(BATTERY_VOLTAGE_PIN, BATTERY_VOLTAGE_RANGE_MV);
   leds_init();
-  switches_init(GPIO_SWITCH_SW1);
-  switches_init(GPIO_SWITCH_SW2);
   motors_init();
+  encoders_init(ENCODER_LEFT);
+  encoders_init(ENCODER_RIGHT);
   servo_init(SERVO_X);
   servo_init(SERVO_Y);
   sonar_init(GPIO_SONAR_OUT, GPIO_SONAR_IN);
+  switches_init(GPIO_SWITCH_SW1);
+  switches_init(GPIO_SWITCH_SW2);
 }
 
 void raspi_robot_term(void) { sonar_term(); }
@@ -106,4 +109,8 @@ int16_t raspi_robot_get_hall_effect() {
 void raspi_robot_servo_set(int16_t *x, int16_t *y) {
   *x = servo_set(SERVO_X, *x);
   *y = servo_set(SERVO_Y, *y);
+}
+
+void raspi_robot_get_encoder_count(uint8_t gpio_num, uint16_t *count) {
+  encoders_get(gpio_num, count);
 }
