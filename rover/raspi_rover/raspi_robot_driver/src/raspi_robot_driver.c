@@ -111,6 +111,7 @@ void raspi_robot_servo_set(int16_t *x, int16_t *y) {
   *y = servo_set(SERVO_Y, *y);
 }
 
-void raspi_robot_get_encoder_count(uint8_t gpio_num, uint16_t *count) {
-  encoders_get(gpio_num, count);
+void raspi_robot_get_encoders(uint16_t *left, uint16_t *right) {
+  encoders_get(ENCODER_LEFT, left);
+  encoders_get(ENCODER_RIGHT, right);
 }

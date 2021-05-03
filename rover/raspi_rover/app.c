@@ -94,6 +94,10 @@ static void publish_battery_state(void) {
 }
 
 static void publish_odometry(void) {
+  uint16_t left_count = 0;
+  uint16_t right_count = 0;
+  raspi_robot_get_encoders(&left_count, &right_count);
+  // TODO Use the counts!
   // Fill message.
   sprintf(odometry_msg->child_frame_id.data, "Unknown");
   // Leave the rest blank for now.
