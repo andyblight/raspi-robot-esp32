@@ -49,14 +49,6 @@
 #define EXECUTOR_HANDLE_COUNT (6)
 // #define EXECUTOR_HANDLE_COUNT (4)
 
-// Motor constants.
-#define MAXIMUM_SPEED_M_S (0.50)
-#define MINIMUM_SPEED_M_S (0.10)
-// The motors do not move the robot when less than this value.
-#define MINIMUM_MOTOR_PERCENT (30)
-// Ticks is preset to 1 second, 10 ticks.
-#define MOTOR_TICKS (10)
-
 rcl_publisher_t publisher_battery_state;
 rcl_publisher_t publisher_odometry;
 rcl_publisher_t publisher_range;
@@ -134,7 +126,7 @@ static void subscription_callback_motors(const void *msg_in) {
   raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
 }
 
-void service_sonar_position_callback(const void *req, void *res) {
+static void service_sonar_position_callback(const void *req, void *res) {
   raspi_robot_msgs__srv__SonarPosition_Request *request =
       (raspi_robot_msgs__srv__SonarPosition_Request *)req;
   raspi_robot_msgs__srv__SonarPosition_Response *response =

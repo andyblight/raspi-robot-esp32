@@ -80,7 +80,7 @@ void raspi_robot_set_led(const raspi_robot_led_t led_in,
  * is stop, 100 is maximum.
  * @param ticks Duration to drive the motors in ticks.
  */
-void raspi_robot_motors_drive(int8_t speed_left, int8_t speed_right,
+void raspi_robot_motors_drive(int8_t percent_left, int8_t percent_right,
                               uint16_t ticks);
 
 /**
@@ -110,8 +110,9 @@ void raspi_robot_servo_set(int16_t *x, int16_t *y);
  * @brief Get counts of encoder pulses since the last call.
  * @param left Count of encoder pulses since last call.
  * @param right Count of encoder pulses since last call.
- * @note This call resets the count of encoder pulses to 0.
+ * @note This call resets the count of encoder pulses to 0.   Positive values
+ * are forward.
  */
-void raspi_robot_get_encoders(uint16_t *left, uint16_t *right);
+void raspi_robot_get_encoders(int16_t *left, int16_t *right);
 
 #endif  // RASPI_ROBOT_DRIVER_H

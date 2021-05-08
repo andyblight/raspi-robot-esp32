@@ -1,5 +1,7 @@
 #include "app_messages.h"
 
+#include <stdio.h>
+
 #include "esp_log.h"
 #include "geometry_msgs/msg/twist.h"
 #include "nav_msgs/msg/odometry.h"
@@ -13,8 +15,64 @@
 // Distance between centres of wheels.
 #define WHEEL_BASE_M (0.10f)
 
+// Motor constants.
+#define MAXIMUM_SPEED_M_S (0.50)
+#define MINIMUM_SPEED_M_S (0.10)
+// The motors do not move the robot when less than this value.
+#define MINIMUM_MOTOR_PERCENT (30)
+// Ticks is preset to 1 second, 10 ticks.
+#define MOTOR_TICKS (10)
+
 // Logging name.
 static const char *TAG = "app_messages";
+
+/**** Private functions ****/
+
+static void calculate_odometry(const float *delta_time, float *x, float *y,
+                               float *theta) {
+  // Get the encoder values.
+  int16_t left = 0;
+  int16_t right = 0;
+  raspi_robot_get_encoders(&left, &right);
+  ESP_LOGI(TAG, "Encoder counts: left %d, right %d", left, right);
+#if 1
+  *x = -0.1f;
+  *y = 0.1f;
+  *theta = 0.2f;
+#else
+  // Divide the relative encoder counts by 11 for the gear ratio
+  double left_wheel_speed = encoder1 / 11.0f;
+  double right_wheel_speed = encoder2 / 11.0f;
+  // Calculate the wheel speed from the delta_time
+  left_wheel_speed /= delta_time;
+  right_wheel_speed /= delta_time;
+  // Divide by 1000 to convert from encoder_ticks_per_second to rps
+  left_wheel_speed /= 1000.0f;
+  right_wheel_speed /= 1000.0f;
+  // Convert rps to mps for each wheel
+  double wheel_circumference = this->wheel_radius_ * 2.0f * M_PI;
+  left_wheel_speed *= wheel_circumference;
+  right_wheel_speed *= wheel_circumference;
+  // Calculate velocities
+  double velocity = 0.0f;
+  velocity += this->wheel_radius_ * right_wheel_speed;
+  velocity += this->wheel_radius_ * left_wheel_speed;
+  velocity /= 2.0f;
+  double angular_velocity = 0.0f;
+  angular_velocity -=
+      this->wheel_radius_ / this->track_width_ * left_wheel_speed;
+  angular_velocity +=
+      this->wheel_radius_ / this->track_width_ * right_wheel_speed;
+  // Calculate new positions
+  x += delta_time * velocity *
+       cos(theta + (angular_velocity / 2.0f) * delta_time);
+  y += delta_time * velocity *
+       sin(theta + (angular_velocity / 2.0f) * delta_time);
+  theta += angular_velocity * delta_time;
+#endif
+}
+
+/**** API functions ****/
 
 void messages_battery_state(sensor_msgs__msg__BatteryState *battery_state_msg) {
   // Fill message.
@@ -38,31 +96,40 @@ void messages_range(sensor_msgs__msg__Range *range_msg) {
 }
 
 void messages_odometry(nav_msgs__msg__Odometry *odometry_msg) {
-#if 0
-  float velocity = 0.0f;
-  float angular = 0.0f;
-  raspi_robot_get_odometry(&velocity, &angular);
-  // Fill message.
+  static float previous_x = 0.0f;
+  static float previous_y = 0.0f;
+  static float previous_theta = 0.0f;
+  // Get the odometry values.
+  float delta_time = 0.1f;
+  float x = 0.0f;
+  float y = 0.0f;
+  float theta = 0.0f;
+  calculate_odometry(&delta_time, &x, &y, &theta);
+  // Fill the message.
   // now?
   // odometry_msg->header.stamp = now;
   sprintf(odometry_msg->child_frame_id.data, "odom");
   // Pose position.
-  odometry_msg->pose.pose.position.x = this->odometry_x;
-  odometry_msg->pose.pose.position.y = this->odometry_y;
+  odometry_msg->pose.pose.position.x = x;
+  odometry_msg->pose.pose.position.y = y;
   odometry_msg->pose.pose.position.z = 0.0f;
   // Pose orientation.
-  odometry_msg->pose.pose.orientation =
-      tf::createQuaternionMsgFromYaw(this->odometry_theta);
+  // TODO
+//   odometry_msg->pose.pose.orientation =
+//       tf::createQuaternionMsgFromYaw(this->odometry_theta);
   // Twist linear.
-    this->odom_msg.twist.twist.linear.x =
-      (this->odometry_x - previous_x)/delta_time;
-    this->odom_msg.twist.twist.linear.y =
-      (this->odometry_y - previous_y)/delta_time;
-    this->odom_msg.twist.twist.linear.z = 0.0f;
+  odometry_msg->twist.twist.linear.x =
+      (x - previous_x) / delta_time;
+  odometry_msg->twist.twist.linear.y =
+      (y - previous_y) / delta_time;
+  odometry_msg->twist.twist.linear.z = 0.0f;
   // Twist angular
-    this->odom_msg.twist.twist.angular.z =
-      (this->odometry_theta - previous_theta)/delta_time;
-#endif
+  odometry_msg->twist.twist.angular.z =
+      (theta - previous_theta) / delta_time;
+  // Update previous_* values for next time.
+  previous_x = x;
+  previous_y = y;
+  previous_theta = theta;
 }
 
 void messages_cmd_vel(const geometry_msgs__msg__Twist *msg) {
