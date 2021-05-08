@@ -1,5 +1,6 @@
 #include "app_messages.h"
 
+#include "esp_log.h"
 #include "geometry_msgs/msg/twist.h"
 #include "nav_msgs/msg/odometry.h"
 #include "raspi_robot_driver.h"
@@ -11,6 +12,9 @@
 #define WHEEL_CIRCUMFERENCE_M (0.10f)
 // Distance between centres of wheels.
 #define WHEEL_BASE_M (0.10f)
+
+// Logging name.
+static const char *TAG = "app_messages";
 
 void messages_battery_state(sensor_msgs__msg__BatteryState *battery_state_msg) {
   // Fill message.
@@ -59,4 +63,41 @@ void messages_odometry(nav_msgs__msg__Odometry *odometry_msg) {
     this->odom_msg.twist.twist.angular.z =
       (this->odometry_theta - previous_theta)/delta_time;
 #endif
+}
+
+void messages_cmd_vel(const geometry_msgs__msg__Twist *msg) {
+  // Only use two variables in the message for differential drive.
+  float forward = msg->linear.x;
+  float rotate = msg->angular.z;
+  ESP_LOGI(TAG, "Received: forward %f, rotate %f", forward, rotate);
+  // Convert float to percent within motor limits.
+  int8_t left_percent = 0;
+  int8_t right_percent = 0;
+  // Do most calculations using absolute velocity.
+  if (forward < 0.0) {
+    forward = -forward;
+  }
+  // Clamp the maximum speed.
+  if (forward > MAXIMUM_SPEED_M_S) {
+    forward = MAXIMUM_SPEED_M_S;
+  }
+  // Convert the forward value to a motor percent.
+  if (forward > MINIMUM_SPEED_M_S) {
+    int8_t forward_percent =
+        (int8_t)((float)(forward / MAXIMUM_SPEED_M_S) * 100);
+    // Clamp minimum percent.
+    if (forward_percent < MINIMUM_MOTOR_PERCENT) {
+      forward_percent = MINIMUM_MOTOR_PERCENT;
+    }
+    // Add sign back in and convert to left and right values.
+    // To go forward, one motor is +ve and the other is -ve.
+    if (forward_percent > 0) {
+      left_percent = forward_percent;
+      right_percent = -forward_percent;
+    } else {
+      left_percent = -forward_percent;
+      right_percent = forward_percent;
+    }
+  }  // Any value less than minimum speed is ignored.
+  raspi_robot_motors_drive(left_percent, right_percent, MOTOR_TICKS);
 }
