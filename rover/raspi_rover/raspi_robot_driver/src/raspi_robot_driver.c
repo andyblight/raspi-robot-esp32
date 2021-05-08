@@ -115,3 +115,4 @@ void raspi_robot_get_encoders(uint16_t *left, uint16_t *right) {
   encoders_get(ENCODER_LEFT, left);
   encoders_get(ENCODER_RIGHT, right);
 }
+

@@ -96,7 +96,7 @@ To test the custom messages, we need to re-build the agent so that the new messa
 In shell 1:
 
 ```bash
-# Copy the mssage package into the agent workspace.
+# Copy the message package into the agent workspace.
 cp -r ~/ws/firmware/mcu_ws/raspi_robot_msgs/ ~/ws/src
 # Build the messages.
 cd ~/ws

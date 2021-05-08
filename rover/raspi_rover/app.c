@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "app_messages.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -81,40 +82,21 @@ static sensor_msgs__msg__BatteryState *battery_state_msg = NULL;
 static sensor_msgs__msg__Range *range_msg = NULL;
 
 static void publish_battery_state(void) {
-  // Fill message.
-  battery_state_msg->voltage = raspi_robot_get_battery_voltage();
-  // Convert from milli-Volts to Volts.
-  battery_state_msg->voltage /= 1000;
-  battery_state_msg->power_supply_technology =
-      sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_LIPO;
-  battery_state_msg->present = true;
+  messages_battery_state(battery_state_msg);
   ESP_LOGI(TAG, "Sending msg: %f", battery_state_msg->voltage);
   rcl_ret_t rc = rcl_publish(&publisher_battery_state, battery_state_msg, NULL);
   RCLC_UNUSED(rc);
 }
 
 static void publish_odometry(void) {
-  uint16_t left_count = 0;
-  uint16_t right_count = 0;
-  raspi_robot_get_encoders(&left_count, &right_count);
-  // TODO Use the counts!
-  // Fill message.
-  sprintf(odometry_msg->child_frame_id.data, "Unknown");
-  // Leave the rest blank for now.
+  messages_odometry(odometry_msg);
   ESP_LOGI(TAG, "Sending odometry: %s", odometry_msg->child_frame_id.data);
   rcl_ret_t rc = rcl_publish(&publisher_odometry, odometry_msg, NULL);
   RCLC_UNUSED(rc);
 }
 
 static void publish_range(void) {
-  status_t status;
-  raspi_robot_get_status(&status);
-  // Fill message.
-  range_msg->radiation_type = 0;   // Ultrasound.
-  range_msg->field_of_view = 0.5;  // radians (+/- 15 degrees ish).
-  range_msg->min_range = 0.05;     // metres
-  range_msg->min_range = 4.0;      // metres
-  range_msg->range = (float)(status.sonar_mm) / 1000;  // metres
+  messages_range(range_msg);
   ESP_LOGI(TAG, "Sending msg: %f", range_msg->range);
   rcl_ret_t rc = rcl_publish(&publisher_range, range_msg, NULL);
   RCLC_UNUSED(rc);

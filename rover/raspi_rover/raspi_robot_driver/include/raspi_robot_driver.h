@@ -106,7 +106,6 @@ int16_t raspi_robot_get_hall_effect();
  */
 void raspi_robot_servo_set(int16_t *x, int16_t *y);
 
-
 /**
  * @brief Get counts of encoder pulses since the last call.
  * @param left Count of encoder pulses since last call.

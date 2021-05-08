@@ -31,6 +31,8 @@ and the HC-SR04 sonar unit.
 
 The wiring schedule is [here](wiring.md).
 
+The encoders used for the wheels were obtained from [here](http://www.pridopia.co.uk/pi-motor-encoder-2p.html).  There seems to be no documentation for the hardware, so I'm not sure how it works.
+
 The `resources` directory contains the data sheets used during development of the
 drivers.
 
