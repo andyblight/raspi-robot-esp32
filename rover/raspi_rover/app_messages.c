@@ -1,7 +1,8 @@
 #include "app_messages.h"
 
 #include <stdio.h>
-
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "esp_log.h"
 #include "geometry_msgs/msg/twist.h"
 #include "nav_msgs/msg/odometry.h"
@@ -33,19 +34,34 @@
 static const char *TAG = "app_messages";
 
 /**** Private functions ****/
-static void get_now_from_ticks(int32_t *secs, uint32_t *nanosecs) {
+static void get_now(int32_t *secs, uint32_t *nanosecs) {
   static int32_t last_secs = 0;
   static int32_t last_nanosecs = 0;
   // Get num ns since last call.
-  // FIXME(AJB) Should come from the OS via function call.
-  uint32_t diff_ns = ODOMETRY_CALL_INTERVAL_MS * NS_PER_MS;
-  uint32_t new_ns = last_nanosecs + diff_ns;
-  if (new_ns > NS_PER_S) {
-    ++last_secs;
-    last_nanosecs = new_ns - NS_PER_S;
+  //   Get tick count and convert to nanoseconds since last call.
+  static uint32_t last_tick_count = 0;
+  uint32_t tick_count_diff = 0;
+  uint32_t tick_count = (uint32_t)xTaskGetTickCount();
+  // Handle tick count wrap around.
+  if (last_tick_count > tick_count) {
+    if (configUSE_16_BIT_TICKS == 1) {
+      tick_count_diff = UINT16_MAX - last_tick_count;
+    } else {
+      tick_count_diff = UINT32_MAX - last_tick_count;
+    }
+    tick_count_diff += tick_count;
   } else {
-    last_nanosecs = new_ns;
+    tick_count_diff = tick_count - last_tick_count;
   }
+  // Convert tick count diff to ns.
+  uint32_t diff_ns = (tick_count_diff / portTICK_RATE_MS) * NS_PER_MS;
+  // Handle nanosecond overflow.
+  last_nanosecs += diff_ns;
+  if (last_nanosecs > NS_PER_S) {
+    ++last_secs;
+    last_nanosecs -= NS_PER_S;
+  }
+  // Set results.
   *secs = last_secs;
   *nanosecs = last_nanosecs;
 }
@@ -56,7 +72,7 @@ static void get_now_from_ticks(int32_t *secs, uint32_t *nanosecs) {
 void set_message_header(std_msgs__msg__Header *header) {
   int32_t secs = 0;
   uint32_t nanosecs = 0;
-  get_now_from_ticks(&secs, &nanosecs);
+  get_now(&secs, &nanosecs);
   // int32_t
   header->stamp.sec = secs;
   // uint32_t
