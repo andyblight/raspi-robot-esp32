@@ -132,6 +132,7 @@ Changes to the messages need to be copied and built twice, firmware and then age
 ### Firmware
 
 ```bash
+. ~/ws/install/local_setup.bash
 rm -rf ~/ws/firmware/mcu_ws/raspi_robot_msgs/
 cp -r ~/code/raspi-robot-esp32/raspi_robot_msgs/ ~/ws/firmware/mcu_ws/
 ros2 run micro_ros_setup configure_firmware.sh raspi_rover -t udp -i 192.168.1.1 -p 8888

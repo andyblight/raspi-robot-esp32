@@ -8,13 +8,19 @@
 #include "raspi_robot_driver.h"
 #include "sensor_msgs/msg/battery_state.h"
 #include "sensor_msgs/msg/range.h"
+#include "std_msgs/msg/header.h"
 
 // Information about the robot.
 // Wheel
 #define WHEEL_CIRCUMFERENCE_M (0.10f)
 // Distance between centres of wheels.
 #define WHEEL_BASE_M (0.10f)
-
+// FIXME(AJB) Hack based on knowledge of system at time of writing.
+#define MS_PER_S (1000)
+#define NS_PER_MS (1000 * 1000)
+#define NS_PER_S (1000 * 1000 * 1000)
+#define ODOMETRY_CALL_INTERVAL_MS (1000)
+#define ODOMETRY_CALL_INTERVAL_S (ODOMETRY_CALL_INTERVAL_MS / MS_PER_S)
 // Motor constants.
 #define MAXIMUM_SPEED_M_S (0.50)
 #define MINIMUM_SPEED_M_S (0.10)
@@ -27,6 +33,36 @@
 static const char *TAG = "app_messages";
 
 /**** Private functions ****/
+static void get_now_from_ticks(int32_t *secs, uint32_t *nanosecs) {
+  static int32_t last_secs = 0;
+  static int32_t last_nanosecs = 0;
+  // Get num ns since last call.
+  // FIXME(AJB) Should come from the OS via function call.
+  uint32_t diff_ns = ODOMETRY_CALL_INTERVAL_MS * NS_PER_MS;
+  uint32_t new_ns = last_nanosecs + diff_ns;
+  if (new_ns > NS_PER_S) {
+    ++last_secs;
+    last_nanosecs = new_ns - NS_PER_S;
+  } else {
+    last_nanosecs = new_ns;
+  }
+  *secs = last_secs;
+  *nanosecs = last_nanosecs;
+}
+
+// Fill the header stamp variable.
+// TODO(AJB) Use frame_id string properly.
+// Contents defined in builtin_interfaces/msg/detail/time__struct.h
+void set_message_header(std_msgs__msg__Header *header) {
+  int32_t secs = 0;
+  uint32_t nanosecs = 0;
+  get_now_from_ticks(&secs, &nanosecs);
+  // int32_t
+  header->stamp.sec = secs;
+  // uint32_t
+  header->stamp.nanosec = nanosecs;
+  sprintf(header->frame_id.data, "To do!");
+}
 
 static void calculate_odometry(const float *delta_time, float *x, float *y,
                                float *theta) {
@@ -100,14 +136,13 @@ void messages_odometry(nav_msgs__msg__Odometry *odometry_msg) {
   static float previous_y = 0.0f;
   static float previous_theta = 0.0f;
   // Get the odometry values.
-  float delta_time = 0.1f;
+  float delta_time = ODOMETRY_CALL_INTERVAL_S;
   float x = 0.0f;
   float y = 0.0f;
   float theta = 0.0f;
   calculate_odometry(&delta_time, &x, &y, &theta);
   // Fill the message.
-  // now?
-  // odometry_msg->header.stamp = now;
+  set_message_header(&odometry_msg->header);
   sprintf(odometry_msg->child_frame_id.data, "odom");
   // Pose position.
   odometry_msg->pose.pose.position.x = x;
@@ -115,17 +150,14 @@ void messages_odometry(nav_msgs__msg__Odometry *odometry_msg) {
   odometry_msg->pose.pose.position.z = 0.0f;
   // Pose orientation.
   // TODO
-//   odometry_msg->pose.pose.orientation =
-//       tf::createQuaternionMsgFromYaw(this->odometry_theta);
+  //   odometry_msg->pose.pose.orientation =
+  //       tf::createQuaternionMsgFromYaw(this->odometry_theta);
   // Twist linear.
-  odometry_msg->twist.twist.linear.x =
-      (x - previous_x) / delta_time;
-  odometry_msg->twist.twist.linear.y =
-      (y - previous_y) / delta_time;
+  odometry_msg->twist.twist.linear.x = (x - previous_x) / delta_time;
+  odometry_msg->twist.twist.linear.y = (y - previous_y) / delta_time;
   odometry_msg->twist.twist.linear.z = 0.0f;
   // Twist angular
-  odometry_msg->twist.twist.angular.z =
-      (theta - previous_theta) / delta_time;
+  odometry_msg->twist.twist.angular.z = (theta - previous_theta) / delta_time;
   // Update previous_* values for next time.
   previous_x = x;
   previous_y = y;

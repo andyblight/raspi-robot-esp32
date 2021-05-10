@@ -81,11 +81,10 @@ Total hours: 61
     Simple driver done.
     1hr
     The driver can generate spurious counts.  Added bug.
-
   * `odom` to publish position change based on encoder data.
-    Distance = revolutions * circumference of wheel.
-    Needs header file or similar to hold robot data.
-
+    Added app_message_files to hold robot specifics and to fill in messages as they were cluttering up the app.c file.
+    Odometry message uses fake data.
+    3hrs
 ## To do
 
 * Implement each message/service and test.
