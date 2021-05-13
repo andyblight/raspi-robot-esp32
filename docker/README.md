@@ -48,4 +48,4 @@ Then in another shell, run the pre-built micro-ROS agent using this command:
 docker run -it --rm --net=host microros/micro-ros-agent:foxy udp4 --port 8888 -v6
 ```
 
-If you examine the output from the agent, you should see messages being sent and received.  You amy need to reboot the ESP32 (press and release the EM button) for the device to connect.
+If you examine the output from the agent, you should see messages being sent and received.  You may need to reboot the ESP32 (press and release the EM button) for the device to connect.

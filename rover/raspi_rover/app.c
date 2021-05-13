@@ -153,7 +153,7 @@ void appMain(void *arg) {
 
   // Create node
   rcl_node_t node = rcl_get_zero_initialized_node();
-  RCCHECK(rclc_node_init_default(&node, "raspi_rover", "", &support));
+  RCCHECK(rclc_node_init_default(&node, TAG, "", &support));
 
   // Create publishers.
   ESP_LOGI(TAG, "Creating publishers");

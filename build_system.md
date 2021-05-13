@@ -163,7 +163,7 @@ Not having the correct numbers in `app-colcon.meta` and the value of `EXECUTOR_H
 
 ## Adding a common interface message
 
-This is pretty straightforward but there are a quirks that you need to bear in mind when using micro-ROS.
+This is pretty straightforward but there are quirks that you need to bear in mind when using micro-ROS.
 
 ### Finding the header files
 
@@ -194,18 +194,16 @@ static void publish_range(void) {
 }
 
 appMain (void *arg) {
-...
+  ...
   // Create messages
   range_msg = sensor_msgs__msg__Range__create();
-...
+  ...
   while (1) {
     rclc_executor_spin_some(&executor, 100);
     usleep(US_PER_TICK);
   }
   // Free resources
   sensor_msgs__msg__Range__destroy(range_msg);
-...
+  ...
 }
-
-
 ```

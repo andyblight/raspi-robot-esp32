@@ -1,12 +1,14 @@
 #include "app_messages.h"
 
 #include <stdio.h>
+
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_log.h"
 #include "geometry_msgs/msg/twist.h"
 #include "nav_msgs/msg/odometry.h"
 #include "raspi_robot_driver.h"
+#include "rosidl_runtime_c/string.h"
 #include "sensor_msgs/msg/battery_state.h"
 #include "sensor_msgs/msg/range.h"
 #include "std_msgs/msg/header.h"
@@ -66,10 +68,22 @@ static void get_now(int32_t *secs, uint32_t *nanosecs) {
   *nanosecs = last_nanosecs;
 }
 
+static void set_rosidl_c_string(rosidl_runtime_c__String *string,
+                                const char *new_string) {
+  // Make sure allocated space is big enough. +1 for null terminator.
+  size_t new_string_length = strlen(new_string) + 1;
+  if (new_string_length > string->capacity) {
+    free(string->data);
+    string->data = (char *)malloc(new_string_length);
+  }
+  // Set new value.
+  snprintf(string->data, new_string_length, "%s", new_string);
+  string->size = new_string_length;
+}
+
 // Fill the header stamp variable.
-// TODO(AJB) Use frame_id string properly.
 // Contents defined in builtin_interfaces/msg/detail/time__struct.h
-void set_message_header(std_msgs__msg__Header *header) {
+void set_message_header(const char *frame_id, std_msgs__msg__Header *header) {
   int32_t secs = 0;
   uint32_t nanosecs = 0;
   get_now(&secs, &nanosecs);
@@ -77,7 +91,7 @@ void set_message_header(std_msgs__msg__Header *header) {
   header->stamp.sec = secs;
   // uint32_t
   header->stamp.nanosec = nanosecs;
-  sprintf(header->frame_id.data, "To do!");
+  set_rosidl_c_string(&header->frame_id, "To do!");
 }
 
 static void calculate_odometry(const float *delta_time, float *x, float *y,
@@ -127,6 +141,7 @@ static void calculate_odometry(const float *delta_time, float *x, float *y,
 /**** API functions ****/
 
 void messages_battery_state(sensor_msgs__msg__BatteryState *battery_state_msg) {
+  set_message_header("Battery state", &msg->header);
   // Fill message.
   battery_state_msg->voltage = raspi_robot_get_battery_voltage();
   // Convert from milli-Volts to Volts.
@@ -159,7 +174,7 @@ void messages_odometry(nav_msgs__msg__Odometry *odometry_msg) {
   calculate_odometry(&delta_time, &x, &y, &theta);
   // Fill the message.
   set_message_header(&odometry_msg->header);
-  sprintf(odometry_msg->child_frame_id.data, "odom");
+  set_rosidl_c_string(&msg->child_frame_id, "Odometry Child");
   // Pose position.
   odometry_msg->pose.pose.position.x = x;
   odometry_msg->pose.pose.position.y = y;
