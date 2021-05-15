@@ -6,10 +6,9 @@
 #include "sensor_msgs/msg/battery_state.h"
 #include "sensor_msgs/msg/range.h"
 
-void messages_battery_state(sensor_msgs__msg__BatteryState *battery_state_msg);
-void messages_range(sensor_msgs__msg__Range *range_msg);
-void messages_odometry(nav_msgs__msg__Odometry *odometry_msg);
-
+void messages_battery_state(sensor_msgs__msg__BatteryState *msg);
+void messages_range(sensor_msgs__msg__Range *msg);
+void messages_odometry(nav_msgs__msg__Odometry *msg);
 void messages_cmd_vel(const geometry_msgs__msg__Twist *msg);
 
 #endif  // APP_MESSAGES_H

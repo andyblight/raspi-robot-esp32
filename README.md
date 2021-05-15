@@ -85,6 +85,9 @@ Total hours: 61
     Added app_message_files to hold robot specifics and to fill in messages as they were cluttering up the app.c file.
     Odometry message uses fake data.
     3hrs
+    Added timestamp info to header. Not quite working right.
+    2h00
+
 ## To do
 
 * Implement each message/service and test.
@@ -96,7 +99,7 @@ Total hours: 61
     7h30 so far.
 
 * Fix RQt.  Missing packages? #7
-* Implement diagnositic message.  #4.
+* Implement diagnostic message.  #4.
   This is a pain to make work so have given up on it for now.
   * Add array containing:
     * Robot status.

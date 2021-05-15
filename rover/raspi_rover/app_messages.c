@@ -1,6 +1,8 @@
 #include "app_messages.h"
 
+#include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -18,6 +20,9 @@
 #define WHEEL_CIRCUMFERENCE_M (0.10f)
 // Distance between centres of wheels.
 #define WHEEL_BASE_M (0.10f)
+// Encoder ticks per revolution.
+#define ENCODER_TICKS_PER_REV (12)
+#define ENCODER_TICKS_TO_METRES (ENCODER_TICKS_PER_REV * WHEEL_CIRCUMFERENCE_M)
 // FIXME(AJB) Hack based on knowledge of system at time of writing.
 #define MS_PER_S (1000)
 #define NS_PER_MS (1000 * 1000)
@@ -91,108 +96,86 @@ void set_message_header(const char *frame_id, std_msgs__msg__Header *header) {
   header->stamp.sec = secs;
   // uint32_t
   header->stamp.nanosec = nanosecs;
-  set_rosidl_c_string(&header->frame_id, "To do!");
+  set_rosidl_c_string(&header->frame_id, frame_id);
 }
 
-static void calculate_odometry(const float *delta_time, float *x, float *y,
-                               float *theta) {
-  // Get the encoder values.
-  int16_t left = 0;
-  int16_t right = 0;
-  raspi_robot_get_encoders(&left, &right);
-  ESP_LOGI(TAG, "Encoder counts: left %d, right %d", left, right);
-#if 1
-  *x = -0.1f;
-  *y = 0.1f;
-  *theta = 0.2f;
-#else
-  // Divide the relative encoder counts by 11 for the gear ratio
-  double left_wheel_speed = encoder1 / 11.0f;
-  double right_wheel_speed = encoder2 / 11.0f;
-  // Calculate the wheel speed from the delta_time
-  left_wheel_speed /= delta_time;
-  right_wheel_speed /= delta_time;
-  // Divide by 1000 to convert from encoder_ticks_per_second to rps
-  left_wheel_speed /= 1000.0f;
-  right_wheel_speed /= 1000.0f;
-  // Convert rps to mps for each wheel
-  double wheel_circumference = this->wheel_radius_ * 2.0f * M_PI;
-  left_wheel_speed *= wheel_circumference;
-  right_wheel_speed *= wheel_circumference;
-  // Calculate velocities
-  double velocity = 0.0f;
-  velocity += this->wheel_radius_ * right_wheel_speed;
-  velocity += this->wheel_radius_ * left_wheel_speed;
-  velocity /= 2.0f;
-  double angular_velocity = 0.0f;
-  angular_velocity -=
-      this->wheel_radius_ / this->track_width_ * left_wheel_speed;
-  angular_velocity +=
-      this->wheel_radius_ / this->track_width_ * right_wheel_speed;
-  // Calculate new positions
-  x += delta_time * velocity *
-       cos(theta + (angular_velocity / 2.0f) * delta_time);
-  y += delta_time * velocity *
-       sin(theta + (angular_velocity / 2.0f) * delta_time);
-  theta += angular_velocity * delta_time;
-#endif
+// Based on code from here:
+// https://answers.ros.org/question/241602/get-odometry-from-wheels-encoders/
+static void calculate_odometry(const float delta_time_s, float *pose_x_m,
+                               float *pose_y_m, float *pose_theta,
+                               float *velocity_x_m_s, float *velocity_y_m_s,
+                               float *velocity_theta) {
+  // Get the encoder values since last call.
+  int16_t delta_left = 0;
+  int16_t delta_right = 0;
+  raspi_robot_get_encoders(&delta_left, &delta_right);
+  ESP_LOGI(TAG, "Encoder counts: left %d, right %d", delta_left,
+           delta_right);
+  // Convert encoder ticks to speed for each wheel in m/s.
+  float speed_left_m_s = delta_left * ENCODER_TICKS_TO_METRES / delta_time_s;
+  float speed_right_m_s = delta_right * ENCODER_TICKS_TO_METRES / delta_time_s;
+  // Calculate velocities.
+  *velocity_x_m_s = (speed_left_m_s + speed_right_m_s) / 2.0f;
+  *velocity_y_m_s = 0.0f;
+  *velocity_theta = (speed_left_m_s + speed_right_m_s) / WHEEL_BASE_M;
+  // Calculate the delta pose values and add (cumulative).
+  *pose_x_m += (*velocity_x_m_s * cos(*velocity_theta)) * delta_time_s;
+  *pose_y_m += (*velocity_x_m_s * sin(*velocity_theta)) * delta_time_s;
+  *pose_theta += *velocity_theta * delta_time_s;
 }
 
 /**** API functions ****/
 
-void messages_battery_state(sensor_msgs__msg__BatteryState *battery_state_msg) {
-  set_message_header("Battery state", &msg->header);
+void messages_battery_state(sensor_msgs__msg__BatteryState *msg) {
+  set_message_header("battery_state", &msg->header);
   // Fill message.
-  battery_state_msg->voltage = raspi_robot_get_battery_voltage();
+  msg->voltage = raspi_robot_get_battery_voltage();
   // Convert from milli-Volts to Volts.
-  battery_state_msg->voltage /= 1000;
-  battery_state_msg->power_supply_technology =
+  msg->voltage /= 1000;
+  msg->power_supply_technology =
       sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_LIPO;
-  battery_state_msg->present = true;
+  msg->present = true;
 }
 
-void messages_range(sensor_msgs__msg__Range *range_msg) {
+void messages_range(sensor_msgs__msg__Range *msg) {
+  // Get distance reported by sonar.
   status_t status;
   raspi_robot_get_status(&status);
   // Fill message.
-  range_msg->radiation_type = 0;   // Ultrasound.
-  range_msg->field_of_view = 0.5;  // radians (+/- 15 degrees ish).
-  range_msg->min_range = 0.05;     // metres
-  range_msg->min_range = 4.0;      // metres
-  range_msg->range = (float)(status.sonar_mm) / 1000;  // metres
+  set_message_header("range", &msg->header);
+  msg->radiation_type = 0;   // Ultrasound.
+  msg->field_of_view = 0.5;  // radians (+/- 15 degrees ish).
+  msg->min_range = 0.05;     // metres
+  msg->min_range = 4.0;      // metres
+  msg->range = (float)(status.sonar_mm) / 1000;  // metres
 }
 
-void messages_odometry(nav_msgs__msg__Odometry *odometry_msg) {
-  static float previous_x = 0.0f;
-  static float previous_y = 0.0f;
-  static float previous_theta = 0.0f;
+void messages_odometry(nav_msgs__msg__Odometry *msg) {
+  // Pose values are cumulative.
+  static float pose_x_m = 0.0f;
+  static float pose_y_m = 0.0f;
+  static float pose_theta = 0.0f;
+  // Velocities are instantaneous.
+  float velocity_x_m_s = 0.0f;
+  float velocity_y_m_s = 0.0f;
+  float velocity_theta = 0.0f;
   // Get the odometry values.
-  float delta_time = ODOMETRY_CALL_INTERVAL_S;
-  float x = 0.0f;
-  float y = 0.0f;
-  float theta = 0.0f;
-  calculate_odometry(&delta_time, &x, &y, &theta);
+  calculate_odometry(ODOMETRY_CALL_INTERVAL_S, &pose_x_m, &pose_y_m, &pose_theta,
+                     &velocity_x_m_s, &velocity_y_m_s, &velocity_theta);
   // Fill the message.
-  set_message_header(&odometry_msg->header);
-  set_rosidl_c_string(&msg->child_frame_id, "Odometry Child");
+  set_message_header("odom", &msg->header);
+  set_rosidl_c_string(&msg->child_frame_id, "base_link");
   // Pose position.
-  odometry_msg->pose.pose.position.x = x;
-  odometry_msg->pose.pose.position.y = y;
-  odometry_msg->pose.pose.position.z = 0.0f;
-  // Pose orientation.
+  msg->pose.pose.position.x = pose_x_m;
+  msg->pose.pose.position.y = pose_y_m;
+  msg->pose.pose.position.z = 0.0f;
   // TODO
   //   odometry_msg->pose.pose.orientation =
-  //       tf::createQuaternionMsgFromYaw(this->odometry_theta);
-  // Twist linear.
-  odometry_msg->twist.twist.linear.x = (x - previous_x) / delta_time;
-  odometry_msg->twist.twist.linear.y = (y - previous_y) / delta_time;
-  odometry_msg->twist.twist.linear.z = 0.0f;
-  // Twist angular
-  odometry_msg->twist.twist.angular.z = (theta - previous_theta) / delta_time;
-  // Update previous_* values for next time.
-  previous_x = x;
-  previous_y = y;
-  previous_theta = theta;
+  //       tf::createQuaternionMsgFromYaw(pose_theta);
+  // Velocities in the Twist message.
+  msg->twist.twist.linear.x = velocity_x_m_s;
+  msg->twist.twist.linear.y = velocity_y_m_s;
+  msg->twist.twist.angular.z = velocity_theta;
 }
 
 void messages_cmd_vel(const geometry_msgs__msg__Twist *msg) {

@@ -75,7 +75,7 @@ static sensor_msgs__msg__Range *range_msg = NULL;
 
 static void publish_battery_state(void) {
   messages_battery_state(battery_state_msg);
-  ESP_LOGI(TAG, "Sending msg: %f", battery_state_msg->voltage);
+  ESP_LOGI(TAG, "Sending battery state: %f", battery_state_msg->voltage);
   rcl_ret_t rc = rcl_publish(&publisher_battery_state, battery_state_msg, NULL);
   RCLC_UNUSED(rc);
 }
@@ -89,7 +89,7 @@ static void publish_odometry(void) {
 
 static void publish_range(void) {
   messages_range(range_msg);
-  ESP_LOGI(TAG, "Sending msg: %f", range_msg->range);
+  ESP_LOGI(TAG, "Sending range: %f", range_msg->range);
   rcl_ret_t rc = rcl_publish(&publisher_range, range_msg, NULL);
   RCLC_UNUSED(rc);
 }

@@ -114,11 +114,11 @@ In shell 2, test the custom messages and services:
 cd ~/ws
 . install/local_setup.bash
 
-ros2 topic pub /raspi_robot_leds raspi_robot_msgs/msg/Leds "{led: 1, flash_rate: 4}"
+ros2 topic pub /raspi_robot/leds raspi_robot_msgs/msg/Leds "{led: 1, flash_rate: 4}"
 
-ros2 topic pub /raspi_robot_motors raspi_robot_msgs/msg/Motors "{left_percent: 30, right_percent: 30, duration_ms: 1000}"
+ros2 topic pub /raspi_robot/motors raspi_robot_msgs/msg/Motors "{left_percent: 30, right_percent: 30, duration_ms: 1000}"
 
-ros2 service call /raspi_robot_sonar_position raspi_robot_msgs/srv/SonarPosition "{x: 10, y: 20}"
+ros2 service call /raspi_robot/sonar_position raspi_robot_msgs/srv/SonarPosition "{x: 10, y: 20}"
 
 ros2 topic pub /raspi_robot_cmd_vel geometry_msgs/msg/Twist "{linear: {x: 1.0}, angular: {z: -1.0}}"
 
