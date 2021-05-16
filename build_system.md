@@ -123,6 +123,11 @@ ros2 service call /raspi_robot/sonar_position raspi_robot_msgs/srv/SonarPosition
 ros2 topic pub /raspi_robot_cmd_vel geometry_msgs/msg/Twist "{linear: {x: 1.0}, angular: {z: -1.0}}"
 
 ros2 topic pub /raspi_robot_cmd_vel geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 1.0}, angular: {z: -1.0}}}"
+
+# Test joystick
+ros2 launch teleop_twist_joy teleop-launch.py joy_config:='xbox' joy_dev:='/dev/ros2-joystick'
+# Teleop with keyboard.
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
 ## Changing the custom messages

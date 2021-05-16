@@ -112,15 +112,15 @@ static void subscription_callback_cmd_vel(const void *msg_in) {
 static void subscription_callback_leds(const void *msg_in) {
   const raspi_robot_msgs__msg__Leds *msg =
       (const raspi_robot_msgs__msg__Leds *)msg_in;
-  ESP_LOGI(TAG, "Received: %d, %d", msg->led, msg->flash_rate);
+  ESP_LOGI(TAG, "Received leds: %d, %d", msg->led, msg->flash_rate);
   raspi_robot_set_led(msg->led, msg->flash_rate);
 }
 
 static void subscription_callback_motors(const void *msg_in) {
   const raspi_robot_msgs__msg__Motors *msg =
       (const raspi_robot_msgs__msg__Motors *)msg_in;
-  ESP_LOGI(TAG, "Received: %d, %d, %d", msg->left_percent, msg->right_percent,
-           msg->duration_ms);
+  ESP_LOGI(TAG, "Received motors: %d, %d, %d", msg->left_percent,
+           msg->right_percent, msg->duration_ms);
   // Call motor functions.
   uint16_t ticks = msg->duration_ms / MS_PER_TICK;
   raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
@@ -133,7 +133,7 @@ static void service_sonar_position_callback(const void *req, void *res) {
       (raspi_robot_msgs__srv__SonarPosition_Response *)res;
   int16_t x = request->x;
   int16_t y = request->y;
-  ESP_LOGI(TAG, "Requested: x %d, y %d", x, y);
+  ESP_LOGI(TAG, "Requested sonar position: x %d, y %d", x, y);
   raspi_robot_servo_set(&x, &y);
   response->x = x;
   response->y = y;

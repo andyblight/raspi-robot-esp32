@@ -2,6 +2,8 @@
 
 This directory has scripts that allow you to setup a docker that allows you to build and run the examples in the [micro-ROS component for ESP-IDF repo](https://github.com/micro-ROS/micro_ros_espidf_component).  NOTE: The repo `micro_ros_espidf_component` is cloned as part of the setup process.
 
+NOTE: If you are using a joystick to teleop the rover, then you need to add a udev rule to your host Linux PC to allow the joystick to be consistently passed through to the docker.  See ["Set up joystick"](#set-up-joystick).
+
 ## Basic operation
 
 The script `./build.bash` creates the docker container.  Do this just once!  This process took about 5 minutes on my PC, so get on with something else while the image is built.
@@ -49,3 +51,72 @@ docker run -it --rm --net=host microros/micro-ros-agent:foxy udp4 --port 8888 -v
 ```
 
 If you examine the output from the agent, you should see messages being sent and received.  You may need to reboot the ESP32 (press and release the EM button) for the device to connect.
+
+## Set up joystick
+
+The joystick driver used by ROS2 expects the joystick to appear on a device node named like this `/dev/input/eventXX` where `XX` is the number of the event.  The reason for this is something to do with using `SDL`, the [Simple DirectMedia Layer](https://www.libsdl.org/).  This is a bit of pain as the number of the event changes based on what hardware has been added.  To get around this problem and allow us to pass a consistent joystick node into the docker, we need to add a `udev` rule to the host PC. Note about it is [here.](https://github.com/ros-drivers/joystick_drivers/tree/ros2/joy#technical-note-about-interfacing-with-the-joystick-on-linux)
+
+As this is a one off per host, I'm going to document the process and not script it.  The basic concept is described [here](https://github.com/ros-drivers/joystick_drivers/tree/ros2/joy/udev) but I have added the actual steps I took to make it work.
+
+I identified the event being used by the joystick by listing the directory `/dev/input` before and after plugging in the joystick.
+
+```bash
+$ ls /dev/input
+by-id  by-path  event0  event1  event10  event11  event12  event13  event14  event15  event2  event3  event4  event5  event6  event7  event8  event9  mice  mouse0
+$ ls /dev/input
+by-id  by-path  event0  event1  event10  event11  event12  event13  event14  event15  event16  event2  event3  event4  event5  event6  event7  event8  event9  js0  mice  mouse0
+```
+
+You can see that the device nodes `event16` and `js0` are created when the joystick is plugged in.  The next thing to do was to find out the information needed to create the `udev` rule.
+
+```bash
+ udevadm info -a -n /dev/input/event16
+
+Udevadm info starts with the device specified by the devpath and then
+walks up the chain of parent devices. It prints for every device
+found, all possible attributes in the udev rules key format.
+A rule to match, can be composed by the attributes of the device
+and the attributes from one single parent device.
+
+  looking at device '/devices/pci0000:00/0000:00:14.0/usb3/3-1/3-1:1.0/input/input20/event16':
+    KERNEL=="event16"
+    SUBSYSTEM=="input"
+    DRIVER==""
+
+  looking at parent device '/devices/pci0000:00/0000:00:14.0/usb3/3-1/3-1:1.0/input/input20':
+    KERNELS=="input20"
+    SUBSYSTEMS=="input"
+    DRIVERS==""
+    ATTRS{phys}=="usb-0000:00:14.0-1/input0"
+    ATTRS{name}=="Microsoft X-Box 360 pad"
+    ATTRS{uniq}==""
+    ATTRS{properties}=="0"
+...
+```
+
+We need this value `ATTRS{name}=="Microsoft X-Box 360 pad"`.  I then created the `udev` rule file, `99-xbox360-wired.rules` and copied in the contents of the [example file](https://github.com/ros-drivers/joystick_drivers/blob/ros2/joy/udev/99-logitech-f710.rules).  I changed the `ATTRS{name}` value and the `SYMLINK` value and ended up with this:
+
+```rules
+KERNEL=="event[0-9]*", SUBSYSTEM=="input", ATTRS{name}=="Microsoft X-Box 360 pad", ACTION=="add", SYMLINK+="ros2_joystick", MODE="666"
+```
+
+Then I tested it to see where the `SYMLINK` value appeared under `/dev`.
+
+```bash
+sudo cp docker/99-xbox360-wired.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+```
+
+After reloading the rules, you need to unplug and plug in the joystick for the rule to take effect.  The new device node appears here `/dev/ros-joystick`.  I then modified the `start.bash` script to attach the `/dev/ros2-joystick` node to the docker and the node appears in my docker as expected.
+
+```bash
+ros2 launch teleop_twist_joy teleop-launch.py joy_config:='xbox' joy_dev:='/dev/ros2-joystick'
+```
+
+When I started the `joy` node, nothing happened!
+
+Tried various things for 2 hours.  Still can't get it working so using keyboard instead.
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
