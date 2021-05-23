@@ -15,27 +15,35 @@
 #include "sensor_msgs/msg/range.h"
 #include "std_msgs/msg/header.h"
 
-// Information about the robot.
-// Wheel
-#define WHEEL_CIRCUMFERENCE_M (0.10f)
-// Distance between centres of wheels.
-#define WHEEL_BASE_M (0.10f)
-// Encoder ticks per revolution.
-#define ENCODER_TICKS_PER_REV (12)
-#define ENCODER_TICKS_TO_METRES (ENCODER_TICKS_PER_REV * WHEEL_CIRCUMFERENCE_M)
-// FIXME(AJB) Hack based on knowledge of system at time of writing.
+// Handy constants.
+#define PI (3.1415f)
 #define MS_PER_S (1000)
 #define NS_PER_MS (1000 * 1000)
 #define NS_PER_S (1000 * 1000 * 1000)
-#define ODOMETRY_CALL_INTERVAL_MS (1000)
-#define ODOMETRY_CALL_INTERVAL_S (ODOMETRY_CALL_INTERVAL_MS / MS_PER_S)
+
+// Information about the robot.
+// Wheel diameter.
+#define WHEEL_DIAMETER_MM (68)
+#define WHEEL_CIRCUMFERENCE_M (PI * WHEEL_DIAMETER_MM / 1000.0f)
+// Distance between centres of wheels.
+#define WHEEL_BASE_MM (160)
+#define WHEEL_BASE_M (WHEEL_BASE_MM / 1000)
+// Encoder ticks per revolution.
+#define ENCODER_TICKS_PER_REV (12)
+#define METRES_PER_ENCODER_TICK (WHEEL_CIRCUMFERENCE_M / ENCODER_TICKS_PER_REV)
 // Motor constants.
+// FIXME(AJB) Validate these.  Guesses for now.
 #define MAXIMUM_SPEED_M_S (0.50)
 #define MINIMUM_SPEED_M_S (0.10)
-// The motors do not move the robot when less than this value.
+// The motors do not move the robot when less than this duty value.
+// FIXME(AJB) Remove this when motor controller working.
 #define MINIMUM_MOTOR_PERCENT (30)
 // Ticks is preset to 1 second, 10 ticks.
 #define MOTOR_TICKS (10)
+
+// FIXME(AJB) Hack based on knowledge of system at time of writing.
+#define ODOMETRY_CALL_INTERVAL_MS (1000)
+#define ODOMETRY_CALL_INTERVAL_S (ODOMETRY_CALL_INTERVAL_MS / MS_PER_S)
 
 // Logging name.
 static const char *TAG = "app_messages";
@@ -111,8 +119,8 @@ static void calculate_odometry(const float delta_time_s, float *pose_x_m,
   raspi_robot_get_encoders(&delta_left, &delta_right);
   ESP_LOGI(TAG, "Odom encoders: left %d, right %d", delta_left, delta_right);
   // Convert encoder ticks to speed for each wheel in m/s.
-  float speed_left_m_s = delta_left * ENCODER_TICKS_TO_METRES / delta_time_s;
-  float speed_right_m_s = delta_right * ENCODER_TICKS_TO_METRES / delta_time_s;
+  float speed_left_m_s = delta_left * METRES_PER_ENCODER_TICK / delta_time_s;
+  float speed_right_m_s = delta_right * METRES_PER_ENCODER_TICK / delta_time_s;
   ESP_LOGI(TAG, "Odom speed: left %f, right %f", speed_left_m_s,
            speed_left_m_s);
   // Calculate velocities.
