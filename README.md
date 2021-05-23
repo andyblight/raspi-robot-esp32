@@ -69,11 +69,9 @@ In addition, the rover will publish some diagnostic messages for debugging purpo
   30mins.
 * Report range. #9
   30 minutes.
-
-Total hours: 61
-
-## WIP
-
+* Implement `cmd_vel` to move. #5
+  1hr.
+* Fix RQt.  Missing packages? #7
 * Implement `odom` publisher.  #6
   * Implement `odom` publisher publishing fake data.
     1hr.
@@ -87,6 +85,15 @@ Total hours: 61
     3hrs
     Added timestamp info to header. Not quite working right.
     2h00
+    Added odom publishing info. Data does not look right.
+    2h00
+
+Total hours: 62
+
+## WIP
+
+* Implement `odom` publisher.  #6
+  * Test odometry and debug.
 
 ## To do
 
@@ -98,7 +105,6 @@ Total hours: 61
     * Need a servo tester to prove voltages etc. will work for the ESP32.
     7h30 so far.
 
-* Fix RQt.  Missing packages? #7
 * Implement diagnostic message.  #4.
   This is a pain to make work so have given up on it for now.
   * Add array containing:
@@ -110,9 +116,6 @@ Total hours: 61
       * Signal strength.
       * Connected.
 * Make the rover do something interesting!
-  * Drive rover using joy stick controller. #10
-    * Implement `cmd_vel` to move. #5
-      * This problem means that the motors subscriber has to be disabled. `[ERROR] [0000000002.196235000] [rclc]: [rclc_subscription_init_default] Error in rcl_subscription_init: Not available memory node, at /home/build/ws/firmware/mcu_ws/uros/rmw_microxrcedds/rmw_microxrcedds_c/src/rmw_subscription.c:110, at /home/build/ws/firmware/mcu_ws/uros/rcl/rcl/src/rcl/subscription.c:175`
     * Will need PID controller as the motors have different characteristics.
   * Generate map of route taken.
 

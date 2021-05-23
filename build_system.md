@@ -120,12 +120,11 @@ ros2 topic pub /raspi_robot/motors raspi_robot_msgs/msg/Motors "{left_percent: 3
 
 ros2 service call /raspi_robot/sonar_position raspi_robot_msgs/srv/SonarPosition "{x: 10, y: 20}"
 
-ros2 topic pub /raspi_robot_cmd_vel geometry_msgs/msg/Twist "{linear: {x: 1.0}, angular: {z: -1.0}}"
-
-ros2 topic pub /raspi_robot_cmd_vel geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 1.0}, angular: {z: -1.0}}}"
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.2}, angular: {z: 0.0}}"
 
 # Test joystick
 ros2 launch teleop_twist_joy teleop-launch.py joy_config:='xbox' joy_dev:='/dev/ros2-joystick'
+
 # Teleop with keyboard.
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```

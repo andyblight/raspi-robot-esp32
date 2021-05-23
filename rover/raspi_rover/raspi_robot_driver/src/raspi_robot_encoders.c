@@ -79,7 +79,7 @@ void encoders_get(uint8_t gpio_num, uint16_t* count) {
       *count = encoders[i].pulse_count;
       encoders[i].pulse_count = 0;
       // TODO Enable interrupts.
-      ESP_LOGI(TAG, "Encoder GPIO %d, count %d", gpio_num, *count);
+      // ESP_LOGI(TAG, "Encoder GPIO %d, count %d", gpio_num, *count);
       break;
     }
   }

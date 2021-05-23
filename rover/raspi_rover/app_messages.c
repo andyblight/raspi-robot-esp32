@@ -109,19 +109,24 @@ static void calculate_odometry(const float delta_time_s, float *pose_x_m,
   int16_t delta_left = 0;
   int16_t delta_right = 0;
   raspi_robot_get_encoders(&delta_left, &delta_right);
-  ESP_LOGI(TAG, "Encoder counts: left %d, right %d", delta_left,
-           delta_right);
+  ESP_LOGI(TAG, "Odom encoders: left %d, right %d", delta_left, delta_right);
   // Convert encoder ticks to speed for each wheel in m/s.
   float speed_left_m_s = delta_left * ENCODER_TICKS_TO_METRES / delta_time_s;
   float speed_right_m_s = delta_right * ENCODER_TICKS_TO_METRES / delta_time_s;
+  ESP_LOGI(TAG, "Odom speed: left %f, right %f", speed_left_m_s,
+           speed_left_m_s);
   // Calculate velocities.
   *velocity_x_m_s = (speed_left_m_s + speed_right_m_s) / 2.0f;
   *velocity_y_m_s = 0.0f;
   *velocity_theta = (speed_left_m_s + speed_right_m_s) / WHEEL_BASE_M;
+  ESP_LOGI(TAG, "Odom velocity: x %f, y %f, theta %f", *velocity_x_m_s,
+           *velocity_y_m_s, *velocity_theta);
   // Calculate the delta pose values and add (cumulative).
   *pose_x_m += (*velocity_x_m_s * cos(*velocity_theta)) * delta_time_s;
   *pose_y_m += (*velocity_x_m_s * sin(*velocity_theta)) * delta_time_s;
   *pose_theta += *velocity_theta * delta_time_s;
+  ESP_LOGI(TAG, "Odom pose: x %f, y %f, theta %f", *pose_x_m,
+           *pose_y_m, *pose_theta);
 }
 
 /**** API functions ****/
@@ -146,7 +151,7 @@ void messages_range(sensor_msgs__msg__Range *msg) {
   msg->radiation_type = 0;   // Ultrasound.
   msg->field_of_view = 0.5;  // radians (+/- 15 degrees ish).
   msg->min_range = 0.05;     // metres
-  msg->min_range = 4.0;      // metres
+  msg->min_range = 2.0;      // metres
   msg->range = (float)(status.sonar_mm) / 1000;  // metres
 }
 
@@ -160,8 +165,9 @@ void messages_odometry(nav_msgs__msg__Odometry *msg) {
   float velocity_y_m_s = 0.0f;
   float velocity_theta = 0.0f;
   // Get the odometry values.
-  calculate_odometry(ODOMETRY_CALL_INTERVAL_S, &pose_x_m, &pose_y_m, &pose_theta,
-                     &velocity_x_m_s, &velocity_y_m_s, &velocity_theta);
+  calculate_odometry(ODOMETRY_CALL_INTERVAL_S, &pose_x_m, &pose_y_m,
+                     &pose_theta, &velocity_x_m_s, &velocity_y_m_s,
+                     &velocity_theta);
   // Fill the message.
   set_message_header("odom", &msg->header);
   set_rosidl_c_string(&msg->child_frame_id, "base_link");
@@ -170,7 +176,7 @@ void messages_odometry(nav_msgs__msg__Odometry *msg) {
   msg->pose.pose.position.y = pose_y_m;
   msg->pose.pose.position.z = 0.0f;
   // TODO
-  //   odometry_msg->pose.pose.orientation =
+  //   msg->pose.pose.orientation =
   //       tf::createQuaternionMsgFromYaw(pose_theta);
   // Velocities in the Twist message.
   msg->twist.twist.linear.x = velocity_x_m_s;

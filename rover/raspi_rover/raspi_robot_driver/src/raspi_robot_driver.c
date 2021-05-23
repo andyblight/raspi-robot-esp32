@@ -65,25 +65,25 @@ static int16_t m_encoder_count_left;
 static int16_t m_encoder_count_right;
 
 static void update_encoder_counts(void) {
-  // Get raw encoder counts.
-  // These have no concept of direction.
   uint16_t count_left = 0;
   uint16_t count_right = 0;
+  // Get raw encoder counts.
+  // These have no concept of direction.
   encoders_get(ENCODER_LEFT, &count_left);
   encoders_get(ENCODER_RIGHT, &count_right);
-  // The commands given to the motors are the only thing that tell us the
-  // direction of the wheels.  Use that information to give directions to the
-  // encoder counts.
+  // The motors are driven in opposite directions to move in the same direction,
+  // i.e. Forward - left +ve, right -ve. Reverse - left -ve, right +ve.
+  // Normalise the counts using motor directions.
   if (m_motor_percent_left > 0) {
     m_encoder_count_left += count_left;
-  } else if (m_motor_percent_left < 0) {
+  } else {
     m_encoder_count_left -= count_left;
-  }  // If 0, don't add anything.
+  }
   if (m_motor_percent_right > 0) {
-    m_encoder_count_right += count_right;
-  } else if (m_motor_percent_right < 0) {
     m_encoder_count_right -= count_right;
-  }  // If 0, don't add anything.
+  } else {
+    m_encoder_count_right += count_right;
+  }
 }
 
 /**** API functions ****/
@@ -148,4 +148,7 @@ void raspi_robot_servo_set(int16_t *x, int16_t *y) {
 void raspi_robot_get_encoders(int16_t *left, int16_t *right) {
   *left = m_encoder_count_left;
   *right = m_encoder_count_right;
+  // Reset count so delta is returned next time.
+  m_encoder_count_left = 0;
+  m_encoder_count_right = 0;
 }
