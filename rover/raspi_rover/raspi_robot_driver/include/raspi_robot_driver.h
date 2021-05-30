@@ -4,6 +4,38 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// Handy constants.
+#define PI (3.1415f)
+#define MS_PER_S (1000)
+#define NS_PER_MS (1000 * 1000)
+#define NS_PER_S (1000 * 1000 * 1000)
+
+// Information about the robot.
+// Wheel diameter.
+#define WHEEL_DIAMETER_MM (68)
+#define WHEEL_CIRCUMFERENCE_M (PI * WHEEL_DIAMETER_MM / 1000.0f)
+// Distance between centres of wheels.
+#define WHEEL_BASE_MM (160)
+#define WHEEL_BASE_M (WHEEL_BASE_MM / 1000)
+
+// Encoder ticks per revolution.
+#define ENCODER_TICKS_PER_REV (12)
+#define METRES_PER_ENCODER_TICK (WHEEL_CIRCUMFERENCE_M / ENCODER_TICKS_PER_REV)
+
+// Motor constants.
+// FIXME(AJB) Validate these.  Guesses for now.
+#define MAXIMUM_SPEED_M_S (0.50)
+#define MINIMUM_SPEED_M_S (0.10)
+// The motors do not move the robot when less than this duty value.
+// FIXME(AJB) Remove this when motor controller working.
+#define MINIMUM_MOTOR_PERCENT (30)
+// Ticks is preset to 1 second, 10 ticks.
+#define MOTOR_TICKS (10)
+
+// FIXME(AJB) Hack based on knowledge of system at time of writing.
+#define ODOMETRY_CALL_INTERVAL_MS (1000)
+#define ODOMETRY_CALL_INTERVAL_S (ODOMETRY_CALL_INTERVAL_MS / MS_PER_S)
+
 typedef enum {
   // The numbered values are used to access an internal array.
   RASPI_ROBOT_LED_ESP_BLUE = 0,
@@ -35,7 +67,7 @@ typedef struct {
   bool switch1;
   bool switch2;
   /// The last value of the sonar in millimetres from the front of the unit.
-  /// Maximum range is 4 metres.
+  /// Maximum range is 4 metres but it is unreliable over 2 metres.
   uint16_t sonar_mm;
 } status_t;
 
@@ -82,6 +114,24 @@ void raspi_robot_set_led(const raspi_robot_led_t led_in,
  */
 void raspi_robot_motors_drive(int8_t percent_left, int8_t percent_right,
                               uint16_t ticks);
+
+/**
+ * @brief Drive the selected motors at the given speed for the given time.
+ * @param linear_m_s Desired speed in meters per second. +ve values are forward,
+ * -ve values are reverse.  Desired velocities are limited to a range that the
+ * robot can deliver.
+ * @param angular_r_s Desired rotation in radians per second. +ve is clockwise,
+ * -ve is anti-clockwise. Desired velocities are limited to a range that the
+ * robot can deliver.
+ * @param ticks Duration to drive the motors in ticks.
+ */
+void raspi_robot_motors_set_velocities(float linear_m_s, float angular_r_s,
+                                       uint16_t ticks);
+
+/**
+ * @brief Calibrate the motors.
+ */
+void raspi_robot_motors_calibrate();
 
 /**
  * @brief Returns the current battery voltage.

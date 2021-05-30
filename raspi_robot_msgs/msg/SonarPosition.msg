@@ -4,8 +4,3 @@
 # Servo positions - range +90 to -90 degrees, 0 is centred.
 int8 x
 int8 y
----
-# The actual servo positions set.
-# The hardware implementation may limit the range of movement.
-int8 x
-int8 y

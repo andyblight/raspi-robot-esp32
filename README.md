@@ -94,6 +94,11 @@ Total hours: 62
 
 * Implement `odom` publisher.  #6
   * Test odometry and debug.
+  4 hours.
+
+* Use encoders to provide feedback for motor control #12
+  Need to add calculations to convert desired m/s value into encoder ticks per second.
+  1hr
 
 ## To do
 

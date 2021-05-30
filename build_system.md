@@ -59,7 +59,7 @@ ros2 run micro_ros_setup configure_firmware.sh <application name> -t udp -i [you
 
 using the value `<application name>`.  The top level file then includes `firmware/toolchain/esp-idf/tools/cmake/project.cmake` that does "a lot of stuff" and eventually includes the file `firmware/freertos_apps/microros_esp32_extensions/main/CMakeLists.txt`.
 
-Finally figured out how to make it work.  For some reason, you can't just add a subdirectory and use CMakeLists.txt files as you would expect.  This is something to do with the way the ESP build system works (looks like it was coded by a Python programmer who does not know how make works).  So there is a work around where a file `app.cmake` is included from the app directory that contains the list of files to build.  There is also a change to the top of file `firmware/freertos_apps/microros_esp32_extensions/main/CMakeLists.txt` that looks like this:
+Finally figured out how to make it work.  For some reason, you can't just add a subdirectory and use CMakeLists.txt files as you would expect.  This is something to do with the way the ESP build system works.  So there is a work around where a file `app.cmake` is included from the app directory that contains the list of files to build.  There is also a change to the top of file `firmware/freertos_apps/microros_esp32_extensions/main/CMakeLists.txt` that looks like this:
 
 ```cmake
 # message("AJB: UROS_APP_FOLDER: " ${UROS_APP_FOLDER})
@@ -163,7 +163,25 @@ ros2 run micro_ros_setup build_agent.sh
 
 When adding publishers etc. you need to update the `app-colcon.meta` file to tell the build system that number of publishers etc.  This change takes effect when the command `ros2 run micro_ros_setup build_firmware.sh` is run.
 
-Not having the correct numbers in `app-colcon.meta` and the value of `EXECUTOR_HANDLE_COUNT` causes a failure during intialisation.  Check the numbers carefully.
+Not having the correct numbers in `app-colcon.meta` and the value of `EXECUTOR_HANDLE_COUNT` causes a failure during initialisation.  Check the numbers carefully.
+
+NOTE: Only one service can be run at a time, even if you change the values in the `app-colcon.meta` file.   The line of code in the file `src/uros/rmw_microxrcedds/rmw_microxrcedds_c/src/utils.c` shows the problem where a single value of status and the number 1 is used.
+
+```cpp
+bool run_xrce_session(rmw_context_impl_t* context, uint16_t requests)
+...
+        // This only handles one request at time
+        uint8_t status;
+        if (!uxr_run_session_until_all_status(&context->session,
+                RMW_UXRCE_ENTITY_CREATION_DESTROY_TIMEOUT,
+                &requests, &status, 1))
+```
+
+This problem causes error messages like this:
+
+```text
+[ERROR] [0000000001.351339000] [rclc]: [rclc_service_init_default] Error in rcl_service_init: Not available memory node, at /home/build/ws/firmware/mcu_ws/uros/rmw_microxrcedds/rmw_microxrcedds_c/src/rmw_service.c:79, at /home/build/ws/firmware/mcu_ws/uros/rcl/rcl/src/rcl/service.c:193
+```
 
 ## Adding a common interface message
 

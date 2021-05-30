@@ -8,42 +8,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "geometry_msgs/msg/twist.h"
+#include "micro_ros_diagnostic_msgs/srv/micro_ros_self_test.h"
 #include "nav_msgs/msg/odometry.h"
 #include "raspi_robot_driver.h"
+#include "raspi_robot_msgs/msg/motors_test.h"
+#include "raspi_robot_msgs/msg/sonar_position.h"
 #include "rosidl_runtime_c/string.h"
 #include "sensor_msgs/msg/battery_state.h"
 #include "sensor_msgs/msg/range.h"
 #include "std_msgs/msg/header.h"
-
-// Handy constants.
-#define PI (3.1415f)
-#define MS_PER_S (1000)
-#define NS_PER_MS (1000 * 1000)
-#define NS_PER_S (1000 * 1000 * 1000)
-
-// Information about the robot.
-// Wheel diameter.
-#define WHEEL_DIAMETER_MM (68)
-#define WHEEL_CIRCUMFERENCE_M (PI * WHEEL_DIAMETER_MM / 1000.0f)
-// Distance between centres of wheels.
-#define WHEEL_BASE_MM (160)
-#define WHEEL_BASE_M (WHEEL_BASE_MM / 1000)
-// Encoder ticks per revolution.
-#define ENCODER_TICKS_PER_REV (12)
-#define METRES_PER_ENCODER_TICK (WHEEL_CIRCUMFERENCE_M / ENCODER_TICKS_PER_REV)
-// Motor constants.
-// FIXME(AJB) Validate these.  Guesses for now.
-#define MAXIMUM_SPEED_M_S (0.50)
-#define MINIMUM_SPEED_M_S (0.10)
-// The motors do not move the robot when less than this duty value.
-// FIXME(AJB) Remove this when motor controller working.
-#define MINIMUM_MOTOR_PERCENT (30)
-// Ticks is preset to 1 second, 10 ticks.
-#define MOTOR_TICKS (10)
-
-// FIXME(AJB) Hack based on knowledge of system at time of writing.
-#define ODOMETRY_CALL_INTERVAL_MS (1000)
-#define ODOMETRY_CALL_INTERVAL_S (ODOMETRY_CALL_INTERVAL_MS / MS_PER_S)
 
 // Logging name.
 static const char *TAG = "app_messages";
@@ -133,8 +106,8 @@ static void calculate_odometry(const float delta_time_s, float *pose_x_m,
   *pose_x_m += (*velocity_x_m_s * cos(*velocity_theta)) * delta_time_s;
   *pose_y_m += (*velocity_x_m_s * sin(*velocity_theta)) * delta_time_s;
   *pose_theta += *velocity_theta * delta_time_s;
-  ESP_LOGI(TAG, "Odom pose: x %f, y %f, theta %f", *pose_x_m,
-           *pose_y_m, *pose_theta);
+  ESP_LOGI(TAG, "Odom pose: x %f, y %f, theta %f", *pose_x_m, *pose_y_m,
+           *pose_theta);
 }
 
 /**** API functions ****/
@@ -192,39 +165,29 @@ void messages_odometry(nav_msgs__msg__Odometry *msg) {
   msg->twist.twist.angular.z = velocity_theta;
 }
 
-void messages_cmd_vel(const geometry_msgs__msg__Twist *msg) {
+void messages_cmd_vel(const void *msg_in) {
+  const geometry_msgs__msg__Twist *msg =
+    (const geometry_msgs__msg__Twist *)msg_in;
   // Only use two variables in the message for differential drive.
-  float forward = msg->linear.x;
-  float rotate = msg->angular.z;
-  ESP_LOGI(TAG, "Received: forward %f, rotate %f", forward, rotate);
-  // Convert float to percent within motor limits.
-  int8_t left_percent = 0;
-  int8_t right_percent = 0;
-  // Do most calculations using absolute velocity.
-  if (forward < 0.0) {
-    forward = -forward;
-  }
-  // Clamp the maximum speed.
-  if (forward > MAXIMUM_SPEED_M_S) {
-    forward = MAXIMUM_SPEED_M_S;
-  }
-  // Convert the forward value to a motor percent.
-  if (forward > MINIMUM_SPEED_M_S) {
-    int8_t forward_percent =
-        (int8_t)((float)(forward / MAXIMUM_SPEED_M_S) * 100);
-    // Clamp minimum percent.
-    if (forward_percent < MINIMUM_MOTOR_PERCENT) {
-      forward_percent = MINIMUM_MOTOR_PERCENT;
-    }
-    // Add sign back in and convert to left and right values.
-    // To go forward, one motor is +ve and the other is -ve.
-    if (forward_percent > 0) {
-      left_percent = forward_percent;
-      right_percent = -forward_percent;
-    } else {
-      left_percent = -forward_percent;
-      right_percent = forward_percent;
-    }
-  }  // Any value less than minimum speed is ignored.
-  raspi_robot_motors_drive(left_percent, right_percent, MOTOR_TICKS);
+  float linear_m_s = msg->linear.x;
+  float angular_r_s = msg->angular.z;
+  ESP_LOGI(TAG, "Received: linear_m_s %f, angular_r_s %f", linear_m_s,
+           angular_r_s);
+  raspi_robot_motors_set_velocities(linear_m_s, angular_r_s, MOTOR_TICKS);
 }
+
+void messages_motors_test(const void *msg_in) {
+  const raspi_robot_msgs__msg__MotorsTest *msg =
+      (const raspi_robot_msgs__msg__MotorsTest *)msg_in;
+  ESP_LOGI(TAG, "Received motors_test: %d", msg->test);
+  // TODO AJB
+}
+
+void messages_sonar_position(const void *msg_in) {
+  raspi_robot_msgs__msg__SonarPosition *msg =
+      (raspi_robot_msgs__msg__SonarPosition *)msg_in;
+  ESP_LOGI(TAG, "Requested sonar position: x %d, y %d", msg->x, msg->y);
+  // TODO AJB
+}
+
+

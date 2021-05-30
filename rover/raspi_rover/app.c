@@ -13,11 +13,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "geometry_msgs/msg/twist.h"
+#include "micro_ros_diagnostic_msgs/srv/micro_ros_self_test.h"
 #include "nav_msgs/msg/odometry.h"
 #include "raspi_robot_driver.h"
 #include "raspi_robot_msgs/msg/leds.h"
 #include "raspi_robot_msgs/msg/motors.h"
-#include "raspi_robot_msgs/srv/sonar_position.h"
+#include "raspi_robot_msgs/msg/motors_test.h"
+#include "raspi_robot_msgs/msg/sonar_position.h"
 #include "sensor_msgs/msg/battery_state.h"
 #include "sensor_msgs/msg/range.h"
 
@@ -44,10 +46,9 @@
 #define MS_PER_TICK (1000 / TICK_RATE_HZ)
 #define US_PER_TICK (MS_PER_TICK * 1000)
 
-// Number of executor handles: one timer, three subscribers, one service.
+// Number of executor handles: 1 timer, 5 subscribers, 0 services.
 // Publishers don't count as they are driven by the timer.
 #define EXECUTOR_HANDLE_COUNT (6)
-// #define EXECUTOR_HANDLE_COUNT (4)
 
 rcl_publisher_t publisher_battery_state;
 rcl_publisher_t publisher_odometry;
@@ -55,7 +56,8 @@ rcl_publisher_t publisher_range;
 rcl_subscription_t subscriber_cmd_vel;
 rcl_subscription_t subscriber_leds;
 rcl_subscription_t subscriber_motors;
-rcl_service_t service_sonar_position;
+rcl_subscription_t subscriber_motors_test;
+rcl_subscription_t subscriber_sonar_position;
 
 // Logging name.
 static const char *TAG = "raspi_rover";
@@ -67,6 +69,7 @@ static const char *k_range = "range";
 // Custom topic/service names.
 static const char *k_robot_leds = "raspi_robot/leds";
 static const char *k_robot_motors = "raspi_robot/motors";
+static const char *k_robot_motors_test = "raspi_robot/motors_test";
 static const char *k_robot_sonar_position = "raspi_robot/sonar_position";
 // Messages to publish.
 static nav_msgs__msg__Odometry *odometry_msg = NULL;
@@ -103,12 +106,6 @@ static void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
   }
 }
 
-static void subscription_callback_cmd_vel(const void *msg_in) {
-  const geometry_msgs__msg__Twist *msg =
-      (const geometry_msgs__msg__Twist *)msg_in;
-  messages_cmd_vel(msg);
-}
-
 static void subscription_callback_leds(const void *msg_in) {
   const raspi_robot_msgs__msg__Leds *msg =
       (const raspi_robot_msgs__msg__Leds *)msg_in;
@@ -124,19 +121,6 @@ static void subscription_callback_motors(const void *msg_in) {
   // Call motor functions.
   uint16_t ticks = msg->duration_ms / MS_PER_TICK;
   raspi_robot_motors_drive(msg->left_percent, msg->right_percent, ticks);
-}
-
-static void service_sonar_position_callback(const void *req, void *res) {
-  raspi_robot_msgs__srv__SonarPosition_Request *request =
-      (raspi_robot_msgs__srv__SonarPosition_Request *)req;
-  raspi_robot_msgs__srv__SonarPosition_Response *response =
-      (raspi_robot_msgs__srv__SonarPosition_Response *)res;
-  int16_t x = request->x;
-  int16_t y = request->y;
-  ESP_LOGI(TAG, "Requested sonar position: x %d, y %d", x, y);
-  raspi_robot_servo_set(&x, &y);
-  response->x = x;
-  response->y = y;
 }
 
 void appMain(void *arg) {
@@ -186,12 +170,29 @@ void appMain(void *arg) {
       ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, Motors),
       k_robot_motors));
 
+  RCCHECK(rclc_subscription_init_default(
+      &subscriber_motors_test, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, MotorsTest),
+      k_robot_motors_test));
+
+  RCCHECK(rclc_subscription_init_default(
+      &subscriber_sonar_position, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, SonarPosition),
+      k_robot_sonar_position));
+
   // Create services.
   ESP_LOGI(TAG, "Creating services");
   RCCHECK(rclc_service_init_default(
-      &service_sonar_position, &node,
+      &subscriber_sonar_position, &node,
       ROSIDL_GET_SRV_TYPE_SUPPORT(raspi_robot_msgs, srv, SonarPosition),
       k_robot_sonar_position));
+
+  const rosidl_service_type_support_t *type_support =
+      ROSIDL_GET_SRV_TYPE_SUPPORT(micro_ros_diagnostic_msgs, srv,
+                                  MicroROSSelfTest);
+  rcl_ret_t temp_rc = rclc_service_init_default(
+      &service_self_test_motors, &node, type_support, k_self_test_motors);
+  printf("AJB: Status on line %d: %d. \n", __LINE__, temp_rc);
 
   // Create timer.
   ESP_LOGI(TAG, "Creating timers");
@@ -209,30 +210,35 @@ void appMain(void *arg) {
   RCCHECK(rclc_executor_set_timeout(&executor, RCL_MS_TO_NS(rcl_wait_timeout)));
   RCCHECK(rclc_executor_add_timer(&executor, &timer));
 
-  ESP_LOGI(TAG, "Adding subs");
+  ESP_LOGI(TAG, "Adding cmd_vel sub");
   geometry_msgs__msg__Twist twist_msg;
-  RCCHECK(rclc_executor_add_subscription(
-      &executor, &subscriber_cmd_vel, &twist_msg,
-      &subscription_callback_cmd_vel, ON_NEW_DATA));
+  RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_cmd_vel,
+                                         &twist_msg, &messages_cmd_vel,
+                                         ON_NEW_DATA));
 
-  ESP_LOGI(TAG, "Adding led subs");
+  ESP_LOGI(TAG, "Adding led sub");
   raspi_robot_msgs__msg__Leds leds_msg;
   RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_leds, &leds_msg,
                                          &subscription_callback_leds,
                                          ON_NEW_DATA));
 
-  ESP_LOGI(TAG, "Adding motor subs");
+  ESP_LOGI(TAG, "Adding motor sub");
   raspi_robot_msgs__msg__Motors motors_msg;
   RCCHECK(rclc_executor_add_subscription(
       &executor, &subscriber_motors, &motors_msg, &subscription_callback_motors,
       ON_NEW_DATA));
 
-  ESP_LOGI(TAG, "Adding services");
-  raspi_robot_msgs__srv__SonarPosition_Request request;
-  raspi_robot_msgs__srv__SonarPosition_Response response;
-  RCCHECK(rclc_executor_add_service(&executor, &service_sonar_position,
-                                    &request, &response,
-                                    &service_sonar_position_callback));
+  ESP_LOGI(TAG, "Adding motor test sub");
+  raspi_robot_msgs__msg__MotorsTest motors_test_msg;
+  RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_motors_test,
+                                         &motors_test_msg,
+                                         &messages_motors_test, ON_NEW_DATA));
+
+  ESP_LOGI(TAG, "Adding sonar position sub");
+  raspi_robot_msgs__msg__SonarPosition sonar_position_msg;
+  RCCHECK(rclc_executor_add_subscription(
+      &executor, &subscriber_sonar_position, &sonar_position_msg,
+      &messages_sonar_position, ON_NEW_DATA));
 
   // Flash the blue LED when running.
   raspi_robot_init();
@@ -250,10 +256,11 @@ void appMain(void *arg) {
   RCCHECK(rcl_subscription_fini(&subscriber_cmd_vel, &node));
   RCCHECK(rcl_subscription_fini(&subscriber_leds, &node));
   RCCHECK(rcl_subscription_fini(&subscriber_motors, &node));
+  RCCHECK(rcl_subscription_fini(&subscriber_motors_test, &node));
+  RCCHECK(rcl_subscription_fini(&subscriber_sonar_position, &node));
   RCCHECK(rcl_publisher_fini(&publisher_battery_state, &node))
   RCCHECK(rcl_publisher_fini(&publisher_odometry, &node))
   RCCHECK(rcl_publisher_fini(&publisher_range, &node))
-  RCCHECK(rcl_service_fini(&service_sonar_position, &node));
   RCCHECK(rcl_node_fini(&node))
   nav_msgs__msg__Odometry__destroy(odometry_msg);
   sensor_msgs__msg__BatteryState__destroy(battery_state_msg);

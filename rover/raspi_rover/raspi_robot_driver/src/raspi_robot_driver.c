@@ -133,7 +133,51 @@ void raspi_robot_motors_drive(int8_t percent_left, int8_t percent_right,
   update_encoder_counts();
 }
 
-uint32_t raspi_robot_get_battery_voltage() { return adc_battery_voltage(); }
+void raspi_robot_motors_set_velocities(float linear_m_s, float angular_r_s,
+                                       uint16_t ticks) {
+  // Convert float to percent within motor limits.
+  int8_t left_percent = 0;
+  int8_t right_percent = 0;
+  // Do most calculations using absolute velocity.
+  float abs_velocity_m_s = 0;
+  if (linear_m_s < 0.0) {
+    abs_velocity_m_s = -linear_m_s;
+  } else {
+    abs_velocity_m_s = linear_m_s;
+  }
+  // Clamp the maximum speed.
+  if (abs_velocity_m_s > MAXIMUM_SPEED_M_S) {
+    abs_velocity_m_s = MAXIMUM_SPEED_M_S;
+  }
+  // Convert the forward value to a motor percent.
+  if (abs_velocity_m_s > MINIMUM_SPEED_M_S) {
+    int8_t forward_percent =
+        (int8_t)((float)(abs_velocity_m_s / MAXIMUM_SPEED_M_S) * 100);
+    // Clamp minimum percent.
+    if (forward_percent < MINIMUM_MOTOR_PERCENT) {
+      forward_percent = MINIMUM_MOTOR_PERCENT;
+    }
+    // Add sign back in and convert to left and right values.
+    // To go forward, one motor is +ve and the other is -ve.
+    if (forward_percent > 0) {
+      left_percent = forward_percent;
+      right_percent = -forward_percent;
+    } else {
+      left_percent = -forward_percent;
+      right_percent = forward_percent;
+    }
+  }  // Any value less than minimum speed is ignored.
+  raspi_robot_motors_drive(left_percent, right_percent, MOTOR_TICKS);
+}
+
+void raspi_robot_motors_calibrate() {
+  // Comment to keep formating sensible.
+}
+
+uint32_t raspi_robot_get_battery_voltage() {
+  // Just return the result.
+  return adc_battery_voltage();
+}
 
 int16_t raspi_robot_get_hall_effect() {
   // Just return the result.
