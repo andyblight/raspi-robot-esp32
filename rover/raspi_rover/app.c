@@ -3,7 +3,6 @@
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
 #include <rcutils/error_handling.h>
-#include <rmw_uros/options.h>
 #include <std_msgs/msg/int32.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -13,7 +12,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "geometry_msgs/msg/twist.h"
-#include "micro_ros_diagnostic_msgs/srv/micro_ros_self_test.h"
 #include "nav_msgs/msg/odometry.h"
 #include "raspi_robot_driver.h"
 #include "raspi_robot_msgs/msg/leds.h"

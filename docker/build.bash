@@ -1,21 +1,13 @@
 #!/bin/bash
-# Build the docker image.
-# Not using set -e as `docker inspect` can legitimately fail.
-# set -x
+set -e
 
-docker_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
-cd ${docker_dir}
-. ./vars.bash
+# Copy code over.
+rm -rf /home/build/ws/firmware/mcu_ws/raspi_robot_msgs/
+cp -rf /home/build/code/raspi-robot-esp32/raspi_robot_msgs/ /home/build/ws/firmware/mcu_ws/
+cp -rf /home/build/code/raspi-robot-esp32/raspi_robot_msgs/ /home/build/ws/src
+cp -rf /home/build/code/raspi-robot-esp32/rover/raspi_rover/ /home/build/ws/firmware/freertos_apps/apps
 
-docker inspect --type=image ${DOCKER_HUB_USER_NAME}/${IMAGE_NAME}:${IMAGE_TAG}  &> /dev/null
-if [ $? == 1 ]
-then
-    set -e
-    docker build \
-        -t ${DOCKER_HUB_USER_NAME}/${IMAGE_NAME}:${IMAGE_TAG} \
-        -f dockerfile \
-        .
-    set +e
-fi
-
-echo "Build of ${IMAGE_NAME} took $SECONDS seconds."
+# Build the new code.
+cd /home/build/ws
+. ./install/local_setup.bash
+ros2 run micro_ros_setup build_firmware.sh

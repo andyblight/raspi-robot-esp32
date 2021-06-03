@@ -25,7 +25,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Leds.msg"
   "msg/Motors.msg"
-  "srv/SonarPosition.srv"
+  "msg/MotorsTest.msg"
+  "msg/SonarPosition.msg"
 )
 
 if(BUILD_TESTING)

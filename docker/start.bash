@@ -88,6 +88,7 @@ CODE_DIR=${docker_dir}/../..
 
 mkdir -p ${WORKSPACE_DIR}
 cp -f ${docker_dir}/setup*.bash ${WORKSPACE_DIR}
+cp -f ${docker_dir}/build.bash ${WORKSPACE_DIR}
 
 docker container inspect ${CONTAINER_NAME} &> /dev/null
 if [ $? == 0 ]
