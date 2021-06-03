@@ -8,7 +8,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "geometry_msgs/msg/twist.h"
-#include "micro_ros_diagnostic_msgs/srv/micro_ros_self_test.h"
 #include "nav_msgs/msg/odometry.h"
 #include "raspi_robot_driver.h"
 #include "raspi_robot_msgs/msg/motors_test.h"

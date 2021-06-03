@@ -178,20 +178,6 @@ void appMain(void *arg) {
       ROSIDL_GET_MSG_TYPE_SUPPORT(raspi_robot_msgs, msg, SonarPosition),
       k_robot_sonar_position));
 
-  // Create services.
-  ESP_LOGI(TAG, "Creating services");
-  RCCHECK(rclc_service_init_default(
-      &subscriber_sonar_position, &node,
-      ROSIDL_GET_SRV_TYPE_SUPPORT(raspi_robot_msgs, srv, SonarPosition),
-      k_robot_sonar_position));
-
-  const rosidl_service_type_support_t *type_support =
-      ROSIDL_GET_SRV_TYPE_SUPPORT(micro_ros_diagnostic_msgs, srv,
-                                  MicroROSSelfTest);
-  rcl_ret_t temp_rc = rclc_service_init_default(
-      &service_self_test_motors, &node, type_support, k_self_test_motors);
-  printf("AJB: Status on line %d: %d. \n", __LINE__, temp_rc);
-
   // Create timer.
   ESP_LOGI(TAG, "Creating timers");
   rcl_timer_t timer = rcl_get_zero_initialized_timer();
