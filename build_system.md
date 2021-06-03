@@ -118,7 +118,7 @@ ros2 topic pub /raspi_robot/leds raspi_robot_msgs/msg/Leds "{led: 1, flash_rate:
 
 ros2 topic pub /raspi_robot/motors raspi_robot_msgs/msg/Motors "{left_percent: 30, right_percent: 30, duration_ms: 1000}"
 
-ros2 service call /raspi_robot/sonar_position raspi_robot_msgs/srv/SonarPosition "{x: 10, y: 20}"
+ros2 topic pub /raspi_robot/sonar_position raspi_robot_msgs/msg/SonarPosition "{x: 10, y: 20}"
 
 ros2 topic pub /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.2}, angular: {z: 0.0}}"
 
