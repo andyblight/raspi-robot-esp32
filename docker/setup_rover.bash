@@ -34,7 +34,7 @@ colcon build --packages-select raspi_robot_msgs
 
 # Apply patch to CMakeLists.txt file so it picks up the app.cmake file.
 cd ~/ws/firmware/freertos_apps
-git apply ~/code/rover/docker-client/CMakeLists.patch
+git apply ~/code/rover/docker/CMakeLists.patch
 
 # Copy rover code into workspace.
 cp -r /home/build/code/raspi-robot-esp32/rover/raspi_rover/ /home/build/ws/firmware/freertos_apps/apps
