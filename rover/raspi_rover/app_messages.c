@@ -186,7 +186,7 @@ void messages_sonar_position(const void *msg_in) {
   raspi_robot_msgs__msg__SonarPosition *msg =
       (raspi_robot_msgs__msg__SonarPosition *)msg_in;
   ESP_LOGI(TAG, "Requested sonar position: x %d, y %d", msg->x, msg->y);
-  // TODO AJB
+  raspi_robot_servo_set(msg->x, msg->y);
 }
 
 

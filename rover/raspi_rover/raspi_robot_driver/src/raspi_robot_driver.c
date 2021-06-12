@@ -184,9 +184,9 @@ int16_t raspi_robot_get_hall_effect() {
   return adc_hall_effect_sensor();
 }
 
-void raspi_robot_servo_set(int16_t *x, int16_t *y) {
-  *x = servo_set(SERVO_X, *x);
-  *y = servo_set(SERVO_Y, *y);
+void raspi_robot_servo_set(int16_t x, int16_t y) {
+  servo_set(SERVO_X, x);
+  servo_set(SERVO_Y, y);
 }
 
 void raspi_robot_get_encoders(int16_t *left, int16_t *right) {

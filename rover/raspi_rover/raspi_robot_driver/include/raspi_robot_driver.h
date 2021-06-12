@@ -151,10 +151,8 @@ int16_t raspi_robot_get_hall_effect();
  * @brief Set the servo position and returns the value actually set.
  * @param x The horizontal angle to set in degrees. -180 to +180, 0 centre.
  * @param y The vertical angle to set in degrees. -180 to +180, 0 horizontal.
- * @note The angle set may be limited by the implementation so check the values
- * that x and y are set to after this call.
  */
-void raspi_robot_servo_set(int16_t *x, int16_t *y);
+void raspi_robot_servo_set(int16_t x, int16_t y);
 
 /**
  * @brief Get counts of encoder pulses since the last call.
