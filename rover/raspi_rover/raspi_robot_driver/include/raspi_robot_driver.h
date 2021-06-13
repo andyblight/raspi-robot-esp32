@@ -150,7 +150,10 @@ int16_t raspi_robot_get_hall_effect();
 /**
  * @brief Set the servo position and returns the value actually set.
  * @param x The horizontal angle to set in degrees. -180 to +180, 0 centre.
+ * +ve is to the right, -ve to the left.
  * @param y The vertical angle to set in degrees. -180 to +180, 0 horizontal.
+ * +ve is up, -ve is down.
+ * @note The implementation limits the movement of the servo to safe values.
  */
 void raspi_robot_servo_set(int16_t x, int16_t y);
 

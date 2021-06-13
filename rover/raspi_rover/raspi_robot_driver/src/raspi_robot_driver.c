@@ -185,8 +185,10 @@ int16_t raspi_robot_get_hall_effect() {
 }
 
 void raspi_robot_servo_set(int16_t x, int16_t y) {
-  servo_set(SERVO_X, x);
-  servo_set(SERVO_Y, y);
+  // Invert the sense of the values to match function specification and to match
+  // pitch and yaw values.
+  servo_set(SERVO_X, -x);
+  servo_set(SERVO_Y, -y);
 }
 
 void raspi_robot_get_encoders(int16_t *left, int16_t *right) {
