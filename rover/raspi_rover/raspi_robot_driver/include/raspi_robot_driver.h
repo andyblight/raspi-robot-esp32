@@ -10,6 +10,12 @@
 #define NS_PER_MS (1000 * 1000)
 #define NS_PER_S (1000 * 1000 * 1000)
 
+// FIXE(AJB) Remove need for this info to be exposed.
+// Ticks is preset to 0.5 second, 5 ticks.
+#define MOTOR_TICKS (5)
+// FIXME(AJB) Hack based on knowledge of system at time of writing.
+#define ODOMETRY_CALL_INTERVAL_MS (1000)
+#define ODOMETRY_CALL_INTERVAL_S (ODOMETRY_CALL_INTERVAL_MS / MS_PER_S)
 // Information about the robot.
 // Wheel diameter.
 #define WHEEL_DIAMETER_MM (68)
@@ -17,24 +23,9 @@
 // Distance between centres of wheels.
 #define WHEEL_BASE_MM (160)
 #define WHEEL_BASE_M (WHEEL_BASE_MM / 1000)
-
 // Encoder ticks per revolution.
 #define ENCODER_TICKS_PER_REV (12)
 #define METRES_PER_ENCODER_TICK (WHEEL_CIRCUMFERENCE_M / ENCODER_TICKS_PER_REV)
-
-// Motor constants.
-// FIXME(AJB) Validate these.  Guesses for now.
-#define MAXIMUM_SPEED_M_S (0.50)
-#define MINIMUM_SPEED_M_S (0.10)
-// The motors do not move the robot when less than this duty value.
-// FIXME(AJB) Remove this when motor controller working.
-#define MINIMUM_MOTOR_PERCENT (30)
-// Ticks is preset to 1 second, 10 ticks.
-#define MOTOR_TICKS (10)
-
-// FIXME(AJB) Hack based on knowledge of system at time of writing.
-#define ODOMETRY_CALL_INTERVAL_MS (1000)
-#define ODOMETRY_CALL_INTERVAL_S (ODOMETRY_CALL_INTERVAL_MS / MS_PER_S)
 
 typedef enum {
   // The numbered values are used to access an internal array.

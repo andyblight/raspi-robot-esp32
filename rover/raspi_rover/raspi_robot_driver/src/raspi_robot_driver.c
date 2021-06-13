@@ -57,6 +57,33 @@ https://github.com/espressif/esp-idf/blob/master/examples/peripherals/ledc/main/
 #define BATTERY_VOLTAGE_PIN 35
 #define BATTERY_VOLTAGE_RANGE_MV 11000
 
+// Handy constants.
+#define PI (3.1415f)
+#define MS_PER_S (1000)
+#define NS_PER_MS (1000 * 1000)
+#define NS_PER_S (1000 * 1000 * 1000)
+
+// Information about the robot.
+// Wheel diameter.
+#define WHEEL_DIAMETER_MM (68)
+#define WHEEL_CIRCUMFERENCE_M (PI * WHEEL_DIAMETER_MM / 1000.0f)
+// Distance between centres of wheels.
+#define WHEEL_BASE_MM (160)
+#define WHEEL_BASE_M (WHEEL_BASE_MM / 1000)
+
+// Encoder ticks per revolution.
+#define ENCODER_TICKS_PER_REV (12)
+#define METRES_PER_ENCODER_TICK (WHEEL_CIRCUMFERENCE_M / ENCODER_TICKS_PER_REV)
+
+// Motor constants.
+// FIXME(AJB) Validate these.  Guesses for now.
+#define MAXIMUM_SPEED_M_S (0.50)
+#define MINIMUM_SPEED_M_S (0.10)
+// The motors do not move the robot when less than this duty value.
+// FIXME(AJB) Remove this when motor controller working.
+#define MINIMUM_MOTOR_PERCENT (30)
+
+
 /**** Private variables & functions ****/
 
 static int8_t m_motor_percent_left;
@@ -159,10 +186,12 @@ void raspi_robot_motors_set_velocities(float linear_m_s, float angular_r_s,
     }
     // Add sign back in and convert to left and right values.
     // To go forward, one motor is +ve and the other is -ve.
-    if (forward_percent > 0) {
+    if (linear_m_s > 0.0) {
+      // Forward.
       left_percent = forward_percent;
       right_percent = -forward_percent;
     } else {
+      // Reverse.
       left_percent = -forward_percent;
       right_percent = forward_percent;
     }
